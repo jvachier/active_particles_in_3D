@@ -4,12 +4,12 @@ using namespace std;
 
 void circular_reflective_boundary_conditions(
 	double *x, double *y, double *z, int Particles,
-	double Wall, int L)
+	double Wall, double height, int L)
 {
 	double distance_squared = 0.0, Wall_squared = Wall * Wall; 
-	double Wall_L = Wall - L/2.0;
+	double height_L = height - L/2.0;
 	double D_AW_z = 0.0;
-#pragma omp parallel for simd num_threads(N_thread)
+//#pragma omp parallel for simd num_threads(N_thread)
 	for (int k = 0; k < Particles; k++)
 	{
 		// x-y coordidnate circle
@@ -22,28 +22,28 @@ void circular_reflective_boundary_conditions(
 
 		// z coordinate 
 		D_AW_z = 0.0;
-		if (abs(z[k]) > Wall_L)
+		if (abs(z[k]) > height_L)
 		{
-			D_AW_z = abs(z[k] + Wall);
+			D_AW_z = abs(z[k] + height);
 
 			if (D_AW_z > 4.0 * L)
 			{
-				if (z[k] > Wall_L)
+				if (z[k] > height_L)
 				{
-					z[k] = Wall - 2.0 * L;
+					z[k] = height - 2.0 * L;
 				}
-				else if (z[k] < -Wall_L)
+				else if (z[k] < -height_L)
 				{
-					z[k] = 2.0 * L - Wall;
+					z[k] = 2.0 * L - height;
 				}
 			}
 			else
 			{
-				if (z[k] > Wall_L)
+				if (z[k] > height_L)
 				{
 					z[k] -= 2.0 * D_AW_z;
 				}
-				else if (x[k] < -Wall_L)
+				else if (x[k] < -height_L)
 				{
 					z[k] += 2.0 * D_AW_z;
 				}
