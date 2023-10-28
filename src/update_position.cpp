@@ -13,7 +13,7 @@ void update_position(
 	double norm_e = 0.0, invers_norm_e = 0.0;
 
 // First orientation
-//#pragma omp parallel for simd num_threads(N_thread)
+#pragma omp parallel for simd num_threads(N_thread)
 for (int k = 0; k < Particles; k++)
 	{
 		xi_ex = distribution_e(generator);
@@ -37,7 +37,7 @@ for (int k = 0; k < Particles; k++)
 
 
 // Second position
-//#pragma omp parallel for simd num_threads(N_thread)
+#pragma omp parallel for simd num_threads(N_thread)
 	for (int k = 0; k < Particles; k++)
 	{
 

@@ -9,7 +9,7 @@ void cylindrical_reflective_boundary_conditions(
 	double distance_squared = 0.0, Wall_squared = Wall * Wall; 
 	double height_L = height - L/2.0;
 	double D_AW_z = 0.0;
-//#pragma omp parallel for simd num_threads(N_thread)
+#pragma omp parallel for simd num_threads(N_thread)
 	for (int k = 0; k < Particles; k++)
 	{
 		// x-y coordidnate circle

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <time.h>
-//#include <omp.h> //import library to use pragma
+#include <omp.h> //import library to use pragma
 #include <tuple> //to output multiple components of a function
 
 #include "print_file.h"
