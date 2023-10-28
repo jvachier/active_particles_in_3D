@@ -46,29 +46,7 @@ int main(int argc, char *argv[])
 	double epsilon, delta, Dt, De, vs;
 	double F, R, Wall, height;
 	int Particles;
-	// char name[100];
-	// char key1[] = "circular";
-	// char key2[] = "squared";
 
-	// bool flag = false;
-
-	// printf("Select confinement geometry, either squared or circular:");
-	// scanf("%s", &name);
-
-	// while (flag == false)
-	// {
-	// 	if ((strcmp(name, key1) == 0) or (strcmp(name, key2) == 0))
-	// 	{
-	// 		flag = true;
-	// 	}
-	// 	else
-	// 	{
-	// 		printf("You have not selected the correct, please select again\n");
-	// 		printf("Select confinement geometry, either squared or circular:");
-	// 		scanf("%s", &name);
-	// 		flag = false;
-	// 	}
-	// }
 	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height);
 	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall, height);
 
@@ -119,8 +97,6 @@ int main(int argc, char *argv[])
 
 	clock_t tStart = clock(); // check time for one trajectory
 
-	//fprintf(datacsv, "Particles,x-position,y-position,time,%s\n", name);
-
 	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n");
 
 	// initialization position and activity
@@ -149,19 +125,6 @@ int main(int argc, char *argv[])
 			x, y, z, Particles,
 			Wall, height, L);
 
-		// if (strcmp(name, key1) == 0) // need to be modified
-		// {
-		// 	circular_reflective_boundary_conditions(
-		// 		x, y, Particles,
-		// 		Wall, L);
-		// }
-		// if (strcmp(name, key2) == 0) // need to be modified
-		// {
-		// 	reflective_boundary_conditions(
-		// 		x, y, Particles,
-		// 		Wall, L);
-		// }
-
 		if (time % 100 == 0 && time >= 0)
 		{
 			print_file(
@@ -175,6 +138,10 @@ int main(int argc, char *argv[])
 
 	free(x);
 	free(y);
+	free(z);
+	free(ex);
+	free(ey);
+	free(ez);
 
 	fclose(datacsv);
 	return 0;
