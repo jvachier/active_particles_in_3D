@@ -42,9 +42,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	omp_set_num_threads(N_thread);
+
 	// read the parameters from the file
 	double epsilon, delta, Dt, De, vs;
-	double F, R, Wall, height;
+	double Wall, height;
 	int Particles;
 
 	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height);
@@ -76,16 +78,12 @@ int main(int argc, char *argv[])
     // Uniform distribution for the orientation - later on maybe take it from the unit sphere but normalized in update position
 	uniform_real_distribution<double> distribution_e(0.0, 1.0);
 
-	double xi_px; // noise for x-position
-	double xi_py; // noise for y-position 
-    double xi_pz; // noise for z-position
-	double xi_ex;  // noise ex ortientation
-    double xi_ey;  // noise ey ortientation
-    double xi_ez;  // noise ez ortientation
-	double x_x;	  // used to initialize
-	double y_y;	  // used to initialize
-
-	int i, j, k;
+	double xi_px = 0.0; // noise for x-position
+	double xi_py = 0.0; // noise for y-position 
+    double xi_pz = 0.0; // noise for z-position
+	double xi_ex = 0.0;  // noise ex ortientation
+    double xi_ey = 0.0;  // noise ey ortientation
+    double xi_ez = 0.0;  // noise ez ortientation
 
 	// double phi = 0.0;
 	double prefactor_e = sqrt(2.0 * delta * De);
@@ -105,8 +103,7 @@ int main(int argc, char *argv[])
 		generator, distribution, distribution_e);
 
 	check_nooverlap(
-		x, y, z, Particles,
-		R, L,
+		x, y, z, Particles, L,
 		generator, distribution);
 	printf("Initialization done.\n");
 
@@ -118,7 +115,7 @@ int main(int argc, char *argv[])
 			x, y, z, ex, ey, ez, prefactor_e, Particles,
 			delta, De, Dt, xi_ex, xi_ey, xi_ez, xi_px,
 			xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz, 
-			r, R, F, prefactor_interaction,
+			r, prefactor_interaction,
 			generator, Gaussdistribution, distribution_e);
 		
 		cylindrical_reflective_boundary_conditions(

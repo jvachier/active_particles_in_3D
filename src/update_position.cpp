@@ -6,14 +6,15 @@ void update_position(
 	double *x, double *y, double *z, double *ex, double *ey, double *ez, double prefactor_e, int Particles,
 	double delta, double De, double Dt, double xi_ex, double xi_ey, double xi_ez, double xi_px,
 	double xi_py, double xi_pz, double vs, double prefactor_xi_px, double prefactor_xi_py, double prefactor_xi_pz,
-	double r, double R, double F, double prefactor_interaction,
+	double r, double prefactor_interaction,
 	default_random_engine &generator, normal_distribution<double> &Gaussdistribution, uniform_real_distribution<double> &distribution_e)
 {
 	double a = 0.0; // local variable - here check if no conflict elsewhere
 	double norm_e = 0.0, invers_norm_e = 0.0;
+	double F = 0.0, R = 0.0;
 
 // First orientation
-#pragma omp parallel for num_threads(N_thread)
+#pragma omp parallel for simd 
 for (int k = 0; k < Particles; k++)
 	{
 		xi_ex = distribution_e(generator);
@@ -37,7 +38,7 @@ for (int k = 0; k < Particles; k++)
 
 
 // Second position
-#pragma omp parallel for num_threads(N_thread)
+#pragma omp parallel for simd 
 	for (int k = 0; k < Particles; k++)
 	{
 
