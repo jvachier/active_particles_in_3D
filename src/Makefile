@@ -1,10 +1,10 @@
 CC = g++-13
 CFLAGS = -Wall -g #-fopenmp
 
-abp_2D_confine: abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o check_nooverlap.o
+abp_3D_confine: abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o check_nooverlap.o
 	$(CC) $(CFLAGS) -o abp_3D_confine.out abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o check_nooverlap.o
 
-abp_2D_confine.o: abp_3D_confine.cpp
+abp_3D_confine.o: abp_3D_confine.cpp
 	$(CC) -c abp_3D_confine.cpp
 
 print_file.o: print_file.cpp
