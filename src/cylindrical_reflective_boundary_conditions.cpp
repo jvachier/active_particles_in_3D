@@ -2,7 +2,7 @@
 
 using namespace std;
 
-void circular_reflective_boundary_conditions(
+void cylindrical_reflective_boundary_conditions(
 	double *x, double *y, double *z, int Particles,
 	double Wall, double height, int L)
 {
