@@ -17,8 +17,7 @@
 #include <tuple> //to output multiple components of a function
 
 #include "print_file.h"
-#include "reflective_boundary_conditions.h"
-#include "circular_reflective_boundary_conditions.h"
+#include "cylindrical_reflective_boundary_conditions.h"
 #include "initialization.h"
 #include "update_position.h"
 #include "check_nooverlap.h"
@@ -47,29 +46,29 @@ int main(int argc, char *argv[])
 	double epsilon, delta, Dt, De, vs;
 	double F, R, Wall;
 	int Particles;
-	char name[100];
-	char key1[] = "circular";
-	char key2[] = "squared";
+	// char name[100];
+	// char key1[] = "circular";
+	// char key2[] = "squared";
 
-	bool flag = false;
+	// bool flag = false;
 
-	printf("Select confinement geometry, either squared or circular:");
-	scanf("%s", &name);
+	// printf("Select confinement geometry, either squared or circular:");
+	// scanf("%s", &name);
 
-	while (flag == false)
-	{
-		if ((strcmp(name, key1) == 0) or (strcmp(name, key2) == 0))
-		{
-			flag = true;
-		}
-		else
-		{
-			printf("You have not selected the correct, please select again\n");
-			printf("Select confinement geometry, either squared or circular:");
-			scanf("%s", &name);
-			flag = false;
-		}
-	}
+	// while (flag == false)
+	// {
+	// 	if ((strcmp(name, key1) == 0) or (strcmp(name, key2) == 0))
+	// 	{
+	// 		flag = true;
+	// 	}
+	// 	else
+	// 	{
+	// 		printf("You have not selected the correct, please select again\n");
+	// 		printf("Select confinement geometry, either squared or circular:");
+	// 		scanf("%s", &name);
+	// 		flag = false;
+	// 	}
+	// }
 	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall);
 	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall);
 
@@ -143,18 +142,23 @@ int main(int argc, char *argv[])
 			xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz, 
 			r, R, F, prefactor_interaction,
 			generator, Gaussdistribution, distribution_e);
-		if (strcmp(name, key1) == 0) // need to be modified
-		{
-			circular_reflective_boundary_conditions(
-				x, y, Particles,
-				Wall, L);
-		}
-		if (strcmp(name, key2) == 0) // need to be modified
-		{
-			reflective_boundary_conditions(
-				x, y, Particles,
-				Wall, L);
-		}
+		
+		cylindrical_reflective_boundary_conditions(
+			x, y, Particles,
+			Wall, L);
+
+		// if (strcmp(name, key1) == 0) // need to be modified
+		// {
+		// 	circular_reflective_boundary_conditions(
+		// 		x, y, Particles,
+		// 		Wall, L);
+		// }
+		// if (strcmp(name, key2) == 0) // need to be modified
+		// {
+		// 	reflective_boundary_conditions(
+		// 		x, y, Particles,
+		// 		Wall, L);
+		// }
 
 		if (time % 100 == 0 && time >= 0)
 		{

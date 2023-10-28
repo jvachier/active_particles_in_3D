@@ -6,6 +6,7 @@
 #include <time.h>
 #include <omp.h> //import library to use pragma
 
-void reflective_boundary_conditions(
-	double *x, double *y, int Particles,
-	double Wall, int L);
+void circular_reflective_boundary_conditions(
+	double *x, double *y, double *z, int Particles,
+	double Wall, int L
+);
