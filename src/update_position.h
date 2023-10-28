@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <time.h>
-#include <omp.h> //import library to use pragma
+//#include <omp.h> //import library to use pragma
 
 void update_position(
 	double *x, double *y, double *z, double *ex, double *ey, double *ez, double prefactor_e, int Particles,

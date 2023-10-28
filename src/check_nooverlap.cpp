@@ -8,7 +8,7 @@ void check_nooverlap(
 	default_random_engine &generator, uniform_real_distribution<double> &distribution)
 {
 	int count = 0;
-#pragma omp parallel for simd num_threads(N_thread)
+//#pragma omp parallel for simd num_threads(N_thread)
 	for (int k = 0; k < Particles; k++)
 	{
 		for (int j = 0; j < Particles; j++)

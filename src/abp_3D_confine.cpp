@@ -3,7 +3,7 @@
  * Purpose: ABP 3D confine in a square using an Euler-Mayurama algorithm
  * Language: C++
  * Date: 2023
- * Compilation line to use pragma: g++ name.cpp -fopenmp -o name.o (on mac run g++-12 ; 12 latest version obtain using brew list gcc)
+ * Compilation line to use pragma: g++ name.cpp -fopenmp -o name.o (on mac run g++-13 ; 13 latest version obtain using brew list gcc)
  * Compilation line to use pragma, simd (vectorization) and tuple: g++ -O3 -std=c++17 name.cpp -fopenmp -o name.o
  */
 
@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include <cmath>
 #include <time.h>
-#include <omp.h> //import library to use pragma
+//#include <omp.h> //import library to use pragma
 #include <tuple> //to output multiple components of a function
 
 #include "print_file.h"
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
 	// read the parameters from the file
 	double epsilon, delta, Dt, De, vs;
-	double F, R, Wall;
+	double F, R, Wall, height;
 	int Particles;
 	// char name[100];
 	// char key1[] = "circular";
@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
 	// 		flag = false;
 	// 	}
 	// }
-	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall);
-	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall);
+	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height);
+	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall, height);
 
     // Position
 	double *x = (double *)malloc(Particles * sizeof(double)); // x-position
@@ -119,7 +119,9 @@ int main(int argc, char *argv[])
 
 	clock_t tStart = clock(); // check time for one trajectory
 
-	fprintf(datacsv, "Particles,x-position,y-position,time,%s\n", name);
+	//fprintf(datacsv, "Particles,x-position,y-position,time,%s\n", name);
+
+	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n");
 
 	// initialization position and activity
 	initialization(
@@ -144,8 +146,8 @@ int main(int argc, char *argv[])
 			generator, Gaussdistribution, distribution_e);
 		
 		cylindrical_reflective_boundary_conditions(
-			x, y, Particles,
-			Wall, L);
+			x, y, z, Particles,
+			Wall, height, L);
 
 		// if (strcmp(name, key1) == 0) // need to be modified
 		// {
