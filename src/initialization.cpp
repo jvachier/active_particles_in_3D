@@ -8,7 +8,7 @@ void initialization(
 {
 	double norm_e = 0.0, invers_norm_e = 0.0;
 // Orientation
-#pragma omp parallel for num_threads(N_thread)
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 		ex[k] = distribution_e(generator);
@@ -25,7 +25,7 @@ void initialization(
 	}
 
 // Position
-#pragma omp parallel for num_threads(N_thread)
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 		x[k] = distribution(generator);

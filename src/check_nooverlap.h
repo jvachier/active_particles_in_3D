@@ -8,5 +8,5 @@
 
 void check_nooverlap(
 	double *x, double *y, double *z, int Particles,
-	double R, int L,
+	int L,
 	std::default_random_engine &generator, std::uniform_real_distribution<double> &distribution);
