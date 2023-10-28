@@ -73,11 +73,18 @@ int main(int argc, char *argv[])
 	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall);
 	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall);
 
+    // Position
 	double *x = (double *)malloc(Particles * sizeof(double)); // x-position
 	double *y = (double *)malloc(Particles * sizeof(double)); // y-position
+    double *z = (double *)malloc(Particles * sizeof(double)); // z-position  
+
+    // Orientation
+    double *ex = (double *)malloc(Particles * sizeof(double)); // ex-orientation
+	double *ey = (double *)malloc(Particles * sizeof(double)); // ey-orientation
+    double *ez = (double *)malloc(Particles * sizeof(double)); // ez-orientation 
 
 	// parameters
-	const int N = 1E6; // number of iterations
+	const int N = 1E3; // number of iterations
 	const int L = 1.0; // particle size
 
 	// initialization of the random generator
@@ -89,20 +96,25 @@ int main(int argc, char *argv[])
 	normal_distribution<double> Gaussdistribution(0.0, 1.0);
 	// Distribution Uniform for initialization
 	uniform_real_distribution<double> distribution(-Wall, Wall);
-	// uniform_real_distribution<double> distribution_e(0.0,360.0*PI / 180.0); // directly in radian
-	uniform_real_distribution<double> distribution_e(0.0, 360.0);
+    // Uniform distribution for the orientation - later on maybe take it from the unit sphere but normalized in update position
+	uniform_real_distribution<double> distribution_e(0.0, 1.0);
 
 	double xi_px; // noise for x-position
-	double xi_py; // noise for y-position
-	double xi_e;  // noise ortientation
+	double xi_py; // noise for y-position 
+    double xi_pz; // noise for z-position
+	double xi_ex;  // noise ex ortientation
+    double xi_ey;  // noise ey ortientation
+    double xi_ez;  // noise ez ortientation
 	double x_x;	  // used to initialize
 	double y_y;	  // used to initialize
+
 	int i, j, k;
 
-	double phi = 0.0;
+	// double phi = 0.0;
 	double prefactor_e = sqrt(2.0 * delta * De);
 	double prefactor_xi_px = sqrt(2.0 * delta * Dt);
 	double prefactor_xi_py = sqrt(2.0 * delta * Dt);
+    double prefactor_xi_pz = sqrt(2.0 * delta * Dt);
 	double prefactor_interaction = epsilon * 48.0;
 	double r = 5.0 * L;
 
@@ -112,11 +124,11 @@ int main(int argc, char *argv[])
 
 	// initialization position and activity
 	initialization(
-		x, y, Particles,
-		generator, distribution);
+		x, y, z, ex, ey, ez, Particles,
+		generator, distribution, distribution_e);
 
 	check_nooverlap(
-		x, y, Particles,
+		x, y, z, Particles,
 		R, L,
 		generator, distribution);
 	printf("Initialization done.\n");
@@ -126,18 +138,18 @@ int main(int argc, char *argv[])
 	for (time = 0; time < N; time++)
 	{
 		update_position(
-			x, y, phi, prefactor_e, Particles,
-			delta, De, Dt, xi_e, xi_px,
-			xi_py, vs, prefactor_xi_px, prefactor_xi_py,
+			x, y, z, ex, ey, ez, prefactor_e, Particles,
+			delta, De, Dt, xi_ex, xi_ey, xi_ez, xi_px,
+			xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz, 
 			r, R, F, prefactor_interaction,
 			generator, Gaussdistribution, distribution_e);
-		if (strcmp(name, key1) == 0)
+		if (strcmp(name, key1) == 0) // need to be modified
 		{
 			circular_reflective_boundary_conditions(
 				x, y, Particles,
 				Wall, L);
 		}
-		if (strcmp(name, key2) == 0)
+		if (strcmp(name, key2) == 0) // need to be modified
 		{
 			reflective_boundary_conditions(
 				x, y, Particles,
@@ -147,7 +159,7 @@ int main(int argc, char *argv[])
 		if (time % 100 == 0 && time >= 0)
 		{
 			print_file(
-				x, y,
+				x, y, z, ex, ey, ez,
 				Particles, time,
 				datacsv);
 		}

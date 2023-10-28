@@ -20,3 +20,6 @@ test.mp4
 
 # Ignore jupyter checkpoints
 *.ipynb_checkpoints
+
+# Ignore all json file
+*.json
