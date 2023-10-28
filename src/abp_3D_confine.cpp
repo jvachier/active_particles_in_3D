@@ -3,7 +3,7 @@
  * Purpose: ABP 3D confine in a square using an Euler-Mayurama algorithm
  * Language: C++
  * Date: 2023
- * Compilation line to use pragma: g++ name.cpp -fopenmp -o name.o (on mac run g++-12 ; 12 latest version obtain using brew list gcc)
+ * Compilation line to use pragma: g++ name.cpp -fopenmp -o name.o (on mac run g++-13 ; 13 latest version obtain using brew list gcc)
  * Compilation line to use pragma, simd (vectorization) and tuple: g++ -O3 -std=c++17 name.cpp -fopenmp -o name.o
  */
 
@@ -17,8 +17,7 @@
 #include <tuple> //to output multiple components of a function
 
 #include "print_file.h"
-#include "reflective_boundary_conditions.h"
-#include "circular_reflective_boundary_conditions.h"
+#include "cylindrical_reflective_boundary_conditions.h"
 #include "initialization.h"
 #include "update_position.h"
 #include "check_nooverlap.h"
@@ -45,33 +44,11 @@ int main(int argc, char *argv[])
 
 	// read the parameters from the file
 	double epsilon, delta, Dt, De, vs;
-	double F, R, Wall;
+	double F, R, Wall, height;
 	int Particles;
-	char name[100];
-	char key1[] = "circular";
-	char key2[] = "squared";
 
-	bool flag = false;
-
-	printf("Select confinement geometry, either squared or circular:");
-	scanf("%s", &name);
-
-	while (flag == false)
-	{
-		if ((strcmp(name, key1) == 0) or (strcmp(name, key2) == 0))
-		{
-			flag = true;
-		}
-		else
-		{
-			printf("You have not selected the correct, please select again\n");
-			printf("Select confinement geometry, either squared or circular:");
-			scanf("%s", &name);
-			flag = false;
-		}
-	}
-	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall);
-	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall);
+	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height);
+	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall, height);
 
     // Position
 	double *x = (double *)malloc(Particles * sizeof(double)); // x-position
@@ -120,7 +97,7 @@ int main(int argc, char *argv[])
 
 	clock_t tStart = clock(); // check time for one trajectory
 
-	fprintf(datacsv, "Particles,x-position,y-position,time,%s\n", name);
+	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n");
 
 	// initialization position and activity
 	initialization(
@@ -143,18 +120,10 @@ int main(int argc, char *argv[])
 			xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz, 
 			r, R, F, prefactor_interaction,
 			generator, Gaussdistribution, distribution_e);
-		if (strcmp(name, key1) == 0) // need to be modified
-		{
-			circular_reflective_boundary_conditions(
-				x, y, Particles,
-				Wall, L);
-		}
-		if (strcmp(name, key2) == 0) // need to be modified
-		{
-			reflective_boundary_conditions(
-				x, y, Particles,
-				Wall, L);
-		}
+		
+		cylindrical_reflective_boundary_conditions(
+			x, y, z, Particles,
+			Wall, height, L);
 
 		if (time % 100 == 0 && time >= 0)
 		{
@@ -169,6 +138,10 @@ int main(int argc, char *argv[])
 
 	free(x);
 	free(y);
+	free(z);
+	free(ex);
+	free(ey);
+	free(ez);
 
 	fclose(datacsv);
 	return 0;

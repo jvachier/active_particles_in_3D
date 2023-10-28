@@ -10,10 +10,10 @@ void update_position(
 	default_random_engine &generator, normal_distribution<double> &Gaussdistribution, uniform_real_distribution<double> &distribution_e)
 {
 	double a = 0.0; // local variable - here check if no conflict elsewhere
-	double norm_e = 0.0;
+	double norm_e = 0.0, invers_norm_e = 0.0;
 
 // First orientation
-#pragma omp parallel for simd num_threads(N_thread)
+#pragma omp parallel for num_threads(N_thread)
 for (int k = 0; k < Particles; k++)
 	{
 		xi_ex = distribution_e(generator);
@@ -28,15 +28,16 @@ for (int k = 0; k < Particles; k++)
 
 		// Need to normalize the orientaional vector
 		norm_e = sqrt(ex[k]*ex[k] + ey[k]*ey[k] + ez[k]*ez[k]);
+		invers_norm_e = 1.0 / norm_e;
 
-		ex[k] = norm_e * ex[k];
-		ey[k] = norm_e * ey[k];
-		ez[k] = norm_e * ez[k];
+		ex[k] = ex[k] * invers_norm_e;
+		ey[k] = ey[k] * invers_norm_e;
+		ez[k] = ez[k] * invers_norm_e;
 	}
 
 
 // Second position
-#pragma omp parallel for simd num_threads(N_thread)
+#pragma omp parallel for num_threads(N_thread)
 	for (int k = 0; k < Particles; k++)
 	{
 
