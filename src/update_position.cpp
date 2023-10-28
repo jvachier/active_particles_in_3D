@@ -15,7 +15,7 @@ void update_position(
 
 // First orientation
 #pragma omp parallel for simd 
-for (int k = 0; k < Particles; k++)
+	for (int k = 0; k < Particles; k++)
 	{
 		xi_ex = distribution_e(generator);
 		xi_ey = distribution_e(generator);
