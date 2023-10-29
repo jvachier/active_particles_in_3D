@@ -21,8 +21,7 @@ void update_position(
 		xi_ey = distribution_e(generator);
 		xi_ez = distribution_e(generator);
 
-
-// here need to initialize the orientation in initialization
+// Ito formulation
 		ex[k] = prefactor_e * ( ey[k]*xi_ez - xi_ez*ez[k])  - ex[k]; 
 		ey[k] = prefactor_e * ( ex[k]*xi_ez - xi_ex*ez[k])  - ey[k];
 		ez[k] = prefactor_e * ( ex[k]*xi_ey - xi_ex*ey[k])  - ez[k];
