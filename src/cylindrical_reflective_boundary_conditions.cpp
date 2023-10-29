@@ -43,7 +43,7 @@ void cylindrical_reflective_boundary_conditions(
 				{
 					z[k] -= 2.0 * D_AW_z;
 				}
-				else if (x[k] < -height_L)
+				else if (z[k] < -height_L)
 				{
 					z[k] += 2.0 * D_AW_z;
 				}

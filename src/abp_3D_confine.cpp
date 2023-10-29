@@ -48,9 +48,10 @@ int main(int argc, char *argv[])
 	double epsilon, delta, Dt, De, vs;
 	double Wall, height;
 	int Particles;
+	int N; // number of iterations
 
-	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height);
-	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\n", epsilon, delta, Particles, Dt, De, vs, Wall, height);
+	fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\n", &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N);
+	printf("%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\n", epsilon, delta, Particles, Dt, De, vs, Wall, height, N);
 
     // Position
 	double *x = (double *)malloc(Particles * sizeof(double)); // x-position
@@ -63,7 +64,6 @@ int main(int argc, char *argv[])
     double *ez = (double *)malloc(Particles * sizeof(double)); // ez-orientation 
 
 	// parameters
-	const int N = 1E3; // number of iterations
 	const int L = 1.0; // particle size
 
 	// initialization of the random generator
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 			x, y, z, Particles,
 			Wall, height, L);
 
-		if (time % 100 == 0 && time >= 0)
+		if (time % 10 == 0 && time >= 0)
 		{
 			print_file(
 				x, y, z, ex, ey, ez,
