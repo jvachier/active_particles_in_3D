@@ -6,7 +6,7 @@
 *.csv
 
 # Ignore all png files
-*.png
+# *.png
 
 # Ignore all text files
 *.txt
