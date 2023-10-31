@@ -7,6 +7,7 @@
 
 # Ignore all png files
 # *.png
+*.html
 
 # Ignore all text files
 *.txt
