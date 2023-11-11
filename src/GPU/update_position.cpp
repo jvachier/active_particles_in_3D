@@ -2,6 +2,35 @@
 
 using namespace std;
 
+
+kernel void add_arrays(device double* ex,
+                       device double* ey,
+                       device double* ez,
+					   device double xi_ex, xi_ey, xi_ez, prefactor_e,
+					   device default_random_engine &generator, device uniform_real_distribution<double> &distribution_e
+                       uint index [[thread_position_in_grid]])
+{
+	double norm_e = 0.0, invers_norm_e = 0.0;
+
+	xi_ex = distribution_e(generator);
+	xi_ey = distribution_e(generator);
+	xi_ez = distribution_e(generator);
+
+// Ito formulation
+	ex[index] = prefactor_e * ( ey[index]*xi_ez - xi_ez*ez[index])  - ex[index]; 
+	ey[index] = prefactor_e * ( ex[index]*xi_ez - xi_ex*ez[index])  - ey[index];
+	ez[index] = prefactor_e * ( ex[index]*xi_ey - xi_ex*ey[index])  - ez[index];
+
+	// Need to normalize the orientaional vector
+	norm_e = sqrt(ex[index]*ex[index] + ey[index]*ey[index] + ez[index]*ez[index]);
+	invers_norm_e = 1.0 / norm_e;
+
+	ex[index] = ex[index] * invers_norm_e;
+	ey[index] = ey[index] * invers_norm_e;
+	ez[index] = ez[index] * invers_norm_e;
+
+}
+
 void update_position(
 	double *x, double *y, double *z, double *ex, double *ey, double *ez, double prefactor_e, int Particles,
 	double delta, double De, double Dt, double xi_ex, double xi_ey, double xi_ez, double xi_px,
@@ -10,30 +39,9 @@ void update_position(
 	default_random_engine &generator, normal_distribution<double> &Gaussdistribution, uniform_real_distribution<double> &distribution_e)
 {
 	double a = 0.0; // local variable - here check if no conflict elsewhere
-	double norm_e = 0.0, invers_norm_e = 0.0;
 	double F = 0.0, R = 0.0;
 
 // First orientation
-#pragma omp parallel for simd 
-	for (int k = 0; k < Particles; k++)
-	{
-		xi_ex = distribution_e(generator);
-		xi_ey = distribution_e(generator);
-		xi_ez = distribution_e(generator);
-
-// Ito formulation
-		ex[k] = prefactor_e * ( ey[k]*xi_ez - xi_ez*ez[k])  - ex[k]; 
-		ey[k] = prefactor_e * ( ex[k]*xi_ez - xi_ex*ez[k])  - ey[k];
-		ez[k] = prefactor_e * ( ex[k]*xi_ey - xi_ex*ey[k])  - ez[k];
-
-		// Need to normalize the orientaional vector
-		norm_e = sqrt(ex[k]*ex[k] + ey[k]*ey[k] + ez[k]*ez[k]);
-		invers_norm_e = 1.0 / norm_e;
-
-		ex[k] = ex[k] * invers_norm_e;
-		ey[k] = ey[k] * invers_norm_e;
-		ez[k] = ez[k] * invers_norm_e;
-	}
 
 // Second position
 #pragma omp parallel for simd 
