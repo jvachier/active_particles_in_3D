@@ -93,9 +93,16 @@ int main(int argc, char *argv[])
 	double prefactor_interaction = epsilon * 48.0;
 	double r = 5.0 * L;
 
+	/* does not work when using openmp
 	clock_t tStart = clock(); // check time for one trajectory
+	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n"); 
+	*/
 
-	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n");
+	// Open MP to get execution time
+	double itime, ftime, exec_time;
+    itime = omp_get_wtime(); 
+    
+    
 
 	// initialization position and activity
 	initialization(
@@ -131,7 +138,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	printf("Time taken: %.2fs\n", (double)(clock() - tStart) / CLOCKS_PER_SEC); // time for one trajectory
+	/* Does not work when using openmp
+	printf("Time taken: %.2fs\n", ((double)(clock() - tStart) / CLOCKS_PER_SEC)); 
+	// printf("Time taken: %.2fs\n", ((double)(clock() - tStart) / CLOCKS_PER_SEC/N_thread));
+	*/
+	
+	ftime = omp_get_wtime();
+    exec_time = ftime - itime;
+    printf("Time taken is %f", exec_time);
 
 	free(x);
 	free(y);
