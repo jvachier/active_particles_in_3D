@@ -1,6 +1,6 @@
 # Visualizations
 ## Pretty picture 
-![plot](./src/CPU/figures/particles.png)
+![plot](./src/figures/particles.png)
 
 ## Partciles trajectories
-![plot](./src/CPU/figures/particles_time.png)
+![plot](./src/figures/particles_time.png)
