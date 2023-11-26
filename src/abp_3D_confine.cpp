@@ -16,11 +16,11 @@
 #include <omp.h> //import library to use pragma
 #include <tuple> //to output multiple components of a function
 
-#include "print_file.h"
-#include "cylindrical_reflective_boundary_conditions.h"
-#include "initialization.h"
-#include "update_position.h"
-#include "check_nooverlap.h"
+#include "headers/print_file.h"
+#include "headers/cylindrical_reflective_boundary_conditions.h"
+#include "headers/initialization.h"
+#include "headers/update_position.h"
+#include "headers/check_nooverlap.h"
 
 #define PI 3.141592653589793
 #define N_thread 6

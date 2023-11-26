@@ -11,6 +11,8 @@
 
 # Ignore all text files
 *.txt
+*.bin
+*data/
 
 # Ignore specific file
 test.mp4
