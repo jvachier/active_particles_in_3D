@@ -94,15 +94,14 @@ int main(int argc, char *argv[])
 	double r = 5.0 * L;
 
 	/* does not work when using openmp
-	clock_t tStart = clock(); // check time for one trajectory
-	fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n"); 
+	clock_t tStart = clock(); // check time for one trajectory 
 	*/
 
 	// Open MP to get execution time
 	double itime, ftime, exec_time;
     itime = omp_get_wtime(); 
     
-    
+    fprintf(datacsv, "Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time\n");
 
 	// initialization position and activity
 	initialization(
@@ -115,8 +114,7 @@ int main(int argc, char *argv[])
 	printf("Initialization done.\n");
 
 	// Time evoultion
-	int time;
-	for (time = 0; time < N; time++)
+	for (int time = 0; time < N; time++)
 	{
 		update_position(
 			x, y, z, ex, ey, ez, prefactor_e, Particles,
