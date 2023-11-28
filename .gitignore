@@ -13,6 +13,7 @@
 *.txt
 *.bin
 *data/
+*videos/
 
 # Ignore specific file
 test.mp4
