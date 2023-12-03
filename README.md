@@ -1,6 +1,10 @@
 # Visualizations
-## Pretty picture 
+
+## Video
+
+## Seventeen different particles
 ![plot](./src/figures/particles.png)
 
-## Partciles trajectories
+## Particles trajectories
 ![plot](./src/figures/particles_time.png)
+
