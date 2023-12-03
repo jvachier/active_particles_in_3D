@@ -16,7 +16,7 @@ void initialization(
 		ez[k] = distribution_e(generator);
 
 		// Need to normalize the orientaional vector
-		norm_e = sqrt(ex[k]*ex[k] + ey[k]*ey[k] + ez[k]*ez[k]);
+		norm_e = sqrt(ex[k] * ex[k] + ey[k] * ey[k] + ez[k] * ez[k]);
 		invers_norm_e = 1.0 / norm_e;
 
 		ex[k] = ex[k] * invers_norm_e;

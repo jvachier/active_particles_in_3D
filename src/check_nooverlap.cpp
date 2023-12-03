@@ -9,7 +9,7 @@ void check_nooverlap(
 {
 	int count = 0;
 	double R = 0.0;
-#pragma omp parallel for simd 
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 		for (int j = 0; j < Particles; j++)
