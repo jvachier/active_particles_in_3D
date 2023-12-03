@@ -6,10 +6,10 @@ void cylindrical_reflective_boundary_conditions(
 	double *x, double *y, double *z, int Particles,
 	double Wall, double height, int L)
 {
-	double distance_squared = 0.0, Wall_squared = Wall * Wall; 
-	double height_L = height - L/2.0;
+	double distance_squared = 0.0, Wall_squared = Wall * Wall;
+	double height_L = height - L / 2.0;
 	double D_AW_z = 0.0;
-#pragma omp parallel for simd 
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 		// x-y coordidnate circle
@@ -20,7 +20,7 @@ void cylindrical_reflective_boundary_conditions(
 			y[k] = (sqrt(Wall_squared) / sqrt(distance_squared)) * y[k];
 		}
 
-		// z coordinate 
+		// z coordinate
 		D_AW_z = 0.0;
 		if (abs(z[k]) > height_L)
 		{
@@ -50,5 +50,4 @@ void cylindrical_reflective_boundary_conditions(
 			}
 		}
 	}
-
 }

@@ -14,20 +14,20 @@ void update_position(
 	double F = 0.0, R = 0.0;
 
 // First orientation
-#pragma omp parallel for simd 
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 		xi_ex = distribution_e(generator);
 		xi_ey = distribution_e(generator);
 		xi_ez = distribution_e(generator);
 
-// Ito formulation
-		ex[k] = prefactor_e * ( ey[k]*xi_ez - xi_ez*ez[k])  - ex[k]; 
-		ey[k] = prefactor_e * ( ex[k]*xi_ez - xi_ex*ez[k])  - ey[k];
-		ez[k] = prefactor_e * ( ex[k]*xi_ey - xi_ex*ey[k])  - ez[k];
+		// Ito formulation
+		ex[k] = prefactor_e * (ey[k] * xi_ez - xi_ez * ez[k]) - ex[k];
+		ey[k] = prefactor_e * (ex[k] * xi_ez - xi_ex * ez[k]) - ey[k];
+		ez[k] = prefactor_e * (ex[k] * xi_ey - xi_ex * ey[k]) - ez[k];
 
 		// Need to normalize the orientaional vector
-		norm_e = sqrt(ex[k]*ex[k] + ey[k]*ey[k] + ez[k]*ez[k]);
+		norm_e = sqrt(ex[k] * ex[k] + ey[k] * ey[k] + ez[k] * ez[k]);
 		invers_norm_e = 1.0 / norm_e;
 
 		ex[k] = ex[k] * invers_norm_e;
@@ -36,7 +36,7 @@ void update_position(
 	}
 
 // Second position
-#pragma omp parallel for simd 
+#pragma omp parallel for simd
 	for (int k = 0; k < Particles; k++)
 	{
 
@@ -63,6 +63,6 @@ void update_position(
 		}
 		x[k] = x[k] + vs * ex[k] * delta + F * x[k] * delta + xi_px * prefactor_xi_px;
 		y[k] = y[k] + vs * ey[k] * delta + F * y[k] * delta + xi_py * prefactor_xi_py;
-		z[k] = z[k] + vs * ez[k] * delta + F * z[k] * delta + xi_pz * prefactor_xi_pz; 
+		z[k] = z[k] + vs * ez[k] * delta + F * z[k] * delta + xi_pz * prefactor_xi_pz;
 	}
 }
