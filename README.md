@@ -12,9 +12,11 @@ $$
 $$
 
 where $\mathbf{e} = (e_x,e_y,e_z)^{T}$ is the orientational unit vector, $\tilde{v_s}$ is the self-propulsion, $\tilde{D_{t}}$ and $\tilde{D_{e}}$ are the translational and rotational diffusivities, respectively. Moreover, $\langle \tilde{\xi_{t_i}}(\tilde{t}')\tilde{\xi_{t_j}}(\tilde{t}) \rangle = \delta_{ij}\delta(\tilde{t}'-\tilde{t})$ and $\langle \tilde{\xi_{e_i}}(\tilde{t}')\tilde{\xi_{e_j}}(\tilde{t}) \rangle = \delta_{ij}\delta(\tilde{t}'-\tilde{t})$ are two Gaussian white noises. Moreover, the interactions between the particles is represented by using the Lennard-Jones  potential
+
 $$
 \tilde{LP} = 4\tilde{\epsilon}[(\frac{\tilde{\sigma}}{\tilde{R}})^{12} - (\frac{\tilde{\sigma}}{\tilde{R}})^{6}]\,,
 $$
+
 where $\tilde{\epsilon}$ is the depth of the potential well, $\tilde{R}$ is the distance between two interacting particles. In this project, only the repulsive part of the potential is considered.
 
 # Visualizations
