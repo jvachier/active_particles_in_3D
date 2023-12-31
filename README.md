@@ -20,7 +20,8 @@ where $\tilde{\epsilon}$ is the depth of the potential well, $\tilde{R}$ is the 
 # Visualizations
 
 ## Video
-https://github.com/jvachier/active_particles_in_3D/assets/89128100/2eb41794-e6a4-45ad-99a3-145b440c7a36
+https://github.com/jvachier/active_particles_in_3D/assets/89128100/e0ea3d4e-58a5-4565-8e57-4705057479df
+
 
 
 ## Seventeen different particles
