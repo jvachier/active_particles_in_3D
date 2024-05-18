@@ -6,14 +6,13 @@
  * Compilation line to use pragma: g++ name.cpp -fopenmp -o name.o (on mac run g++-13 ; 13 latest version obtain using brew list gcc)
  * Compilation line to use pragma, simd (vectorization) and tuple: g++ -O3 -std=c++17 name.cpp -fopenmp -o name.o
  */
-
+#include <omp.h>
+#include <time.h>
+#include <stdio.h>
 #include <iostream>
 #include <random>
 #include <cstring>
-#include <stdio.h>
 #include <cmath>
-#include <time.h>
-#include <omp.h>
 #include <tuple>
 
 #include "headers/print_file.h"

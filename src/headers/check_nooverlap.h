@@ -1,10 +1,10 @@
+#include <time.h>
+#include <stdio.h>
+#include <omp.h>  // import library to use pragma
 #include <iostream>
 #include <random>
 #include <cstring>
-#include <stdio.h>
 #include <cmath>
-#include <time.h>
-#include <omp.h>  // import library to use pragma
 
 void check_nooverlap(
   double *x, double *y, double *z, int Particles,
