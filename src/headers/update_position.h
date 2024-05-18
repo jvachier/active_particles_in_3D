@@ -1,10 +1,10 @@
 #include <iostream>
 #include <random>
 #include <cstring>
-#include <stdio.h>
-#include <cmath>
 #include <time.h>
-#include <omp.h>  // import library to use pragma
+#include <stdio.h>
+#include <omp.h>
+#include <cmath>
 
 void update_position(
   double *x, double *y, double *z,
