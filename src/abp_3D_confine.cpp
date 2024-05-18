@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
 
   // Orientation
   double *ex = reinterpret_cast<double*> \
-  (malloc(Particles * sizeof(double)));  // ex-orientation
+    (malloc(Particles * sizeof(double)));  // ex-orientation
   double *ey = reinterpret_cast<double*> \
     (malloc(Particles * sizeof(double)));  // ey-orientation
   double *ez = reinterpret_cast<double*> \
