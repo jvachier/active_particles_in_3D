@@ -15,6 +15,6 @@ void update_position(
   double xi_py, double xi_pz, double vs,
   double prefactor_xi_px, double prefactor_xi_py, double prefactor_xi_pz,
   double r, double prefactor_interaction,
-  std::default_random_engine *generator,
-  std::normal_distribution<double> *Gaussdistribution,
-  std::uniform_real_distribution<double> *distribution_e);
+  std::default_random_engine &generator,
+  std::normal_distribution<double> &Gaussdistribution,
+  std::uniform_real_distribution<double> &distribution_e);

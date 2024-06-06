@@ -12,9 +12,9 @@ void update_position(
   double prefactor_xi_px, double prefactor_xi_py,
   double prefactor_xi_pz,
   double r, double prefactor_interaction,
-  default_random_engine generator,
-  normal_distribution<double> Gaussdistribution,
-  uniform_real_distribution<double> distribution_e) {
+  default_random_engine &generator,
+  normal_distribution<double> &Gaussdistribution,
+  uniform_real_distribution<double> &distribution_e) {
     double a = 0.0;  // local variable - here check if no conflict elsewhere
     double norm_e = 0.0, invers_norm_e = 0.0;
     double F = 0.0, R = 0.0;
