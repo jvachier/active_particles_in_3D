@@ -6,9 +6,9 @@ void initialization(
   double *x, double *y, double *z,
   double *ex, double *ey, double *ez,
   int Particles,
-  default_random_engine generator,
-  uniform_real_distribution<double> distribution,
-  uniform_real_distribution<double> distribution_e) {
+  default_random_engine &generator,
+  uniform_real_distribution<double> &distribution,
+  uniform_real_distribution<double> &distribution_e) {
   double norm_e = 0.0, invers_norm_e = 0.0;
   // Orientation
 #pragma omp parallel for simd
