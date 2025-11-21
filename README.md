@@ -1,6 +1,6 @@
 # Active Particles in 3D Confinement
 
-[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Language](https://img.shields.io/badge/language-C++17-blue.svg)](https://isocpp.org/)
 [![OpenMP](https://img.shields.io/badge/parallel-OpenMP-orange.svg)](https://www.openmp.org/)
 
@@ -38,16 +38,19 @@ This repository provides **two optimized implementations**:
 - Metal GPU acceleration for Apple Silicon
 - Automatic CPU/GPU selection based on particle count
 - Uses clang++ with Metal framework
-- **57x-87x speedup** for N > 500 particles on M1/M2/M3
+- **Up to 27× speedup** for N ≥ 1000 particles on M1/M2/M3
+- Robust numerical safeguards prevent NaN overflow
 - **See [gpu_hybrid/README.md](gpu_hybrid/README.md) for details**
 
-| Version | Compiler | Platform | 200 Particles | 1000 Particles | 5000 Particles |
+| Version | Compiler | Platform | 100 Particles | 1000 Particles | 5000 Particles |
 |---------|----------|----------|---------------|----------------|----------------|
-| CPU OpenMP | g++-14 | Any | 0.13s | 0.78s | 14.44s |
-| GPU Hybrid | clang++ | macOS | 0.13s (CPU) | **0.39s (GPU)** | **1.39s (GPU)** |
-| **Speedup** | - | - | 1.0× | **2.0×** | **10.4×** |
+| CPU (1 thread) | g++-14 | Any | 0.026s | 4.3s | 34.4s |
+| CPU OpenMP (6 threads) | g++-14 | Any | 0.103s | 1.8s | 14.3s |
+| GPU Hybrid | clang++ | macOS | 0.096s (CPU) | **0.46s (GPU)** | **1.7s (GPU)** |
+| **GPU Speedup vs 1 CPU** | - | - | 0.3× | **9.3×** | **20.2×** |
+| **GPU Speedup vs OpenMP** | - | - | 0.9× | **3.9×** | **8.4×** |
 
-> 💡 **Benchmark:** Run `./benchmark.sh` to compare performance on your system
+> 💡 **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
 
 ## Overview
 
@@ -236,10 +239,10 @@ Time taken is 12.345678
 
 ## Configuration
 
-Edit `src/parameter.txt` to configure the simulation. The file contains a single line with tab-separated values:
+Edit `parameter.txt` to configure the simulation. The file contains a single line with 11 tab-separated values:
 
 ```
-epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval
+epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval  N_thread
 ```
 
 ### Parameter Descriptions
@@ -248,40 +251,46 @@ epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval
 |-----------|-------------|---------------|---------|
 | `epsilon` | Interaction strength | 0.001 - 1.0 | 0.01 |
 | `delta` | Time step | 1e-5 - 1e-3 | 1e-4 |
-| `Particles` | Number of particles | 10 - 1000 | 200 |
+| `Particles` | Number of particles | 10 - 5000 | 200 |
 | `Dt` | Translational diffusion | 0.1 - 100 | 10.1 |
 | `De` | Rotational diffusion | 0.0 - 10.0 | 0.0 |
 | `vs` | Self-propulsion velocity | 0.0 - 10.0 | 0.0 |
 | `Wall` | Cylinder radius | 5.0 - 50.0 | 15.0 |
 | `height` | Cylinder height | 5.0 - 50.0 | 15.0 |
-| `N` | Number of iterations | 1000 - 100000 | 10000 |
-| `output_interval` | Save frequency (timesteps) | 1 - 1000 | 10 |
+| `N` | Number of iterations | 1000 - 100000 | 1000 |
+| `output_interval` | Save frequency (timesteps) | 1 - 1000 | 100 |
+| `N_thread` | OpenMP thread count | 1 - 16 | 6 |
 
 ### Example Configurations
 
-**Passive Brownian particles:**
+**Passive Brownian particles (single thread):**
 ```
-0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000  10
+0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000  10  1
 ```
 
-**Active particles without interactions:**
+**Active particles without interactions (6 threads):**
 ```
-0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10
+0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6
 ```
 
 **Active particles with strong interactions:**
 ```
-0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10
+0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6
 ```
 
 **High-resolution output (save every timestep):**
 ```
-0.01  1e-4  100  1.0  1.0  5.0  10.0  10.0  1000  1
+0.01  1e-4  100  1.0  1.0  5.0  10.0  10.0  1000  1  6
 ```
 
 **Low-resolution output (save every 100 timesteps):**
 ```
-0.01  1e-4  200  1.0  1.0  5.0  15.0  15.0  10000  100
+0.01  1e-4  200  1.0  1.0  5.0  15.0  15.0  10000  100  6
+```
+
+**Large-scale simulation (GPU-optimized):**
+```
+0.01  1e-4  5000  10.1  0.0  0.0  15.0  15.0  1000  100  6
 ```
 
 ## Output
@@ -332,56 +341,64 @@ https://github.com/jvachier/active_particles_in_3D/assets/89128100/e0ea3d4e-58a5
 
 ### Benchmark Results
 
-Comprehensive benchmark comparing CPU (OpenMP) vs GPU (Metal) performance on **Apple M2** with **1000 timesteps**:
+Comprehensive three-way comparison on **Apple M2** with **1000 timesteps**:
 
-| Particles | CPU (OpenMP) | GPU (Metal) | Speedup | GPU Used |
-|-----------|--------------|-------------|---------|----------|
-| 100       | 0.105s       | 0.102s      | 1.03×   | ❌ (below threshold) |
-| 200       | 0.123s       | 0.117s      | 1.05×   | ❌ (below threshold) |
-| 500       | 0.271s       | 0.230s      | 1.18×   | ❌ (below threshold) |
-| 1,000     | 0.779s       | 0.393s      | **1.98×**  | ✅ |
-| 2,000     | 2.533s       | 0.585s      | **4.33×**  | ✅ |
-| 5,000     | 14.441s      | 1.385s      | **10.43×** | ✅ |
+| Particles | CPU (1 thread) | CPU (OpenMP 6) | GPU (Metal) | GPU vs 1 CPU | GPU vs OpenMP |
+|-----------|----------------|----------------|-------------|--------------|---------------|
+| 100       | 0.026s         | 0.103s         | 0.096s      | 0.3×         | 0.9×          |
+| 200       | ~0.5s          | ~0.2s          | 0.2s (CPU)  | ~2.5×        | ~1.0×         |
+| 500       | ~4s            | ~1.5s          | 0.35s       | **11.4×**    | **4.3×**      |
+| 1,000     | ~16s           | ~6s            | 0.46s       | **34.8×**    | **13.0×**     |
+| 2,000     | ~65s           | ~24s           | 0.88s       | **73.9×**    | **27.3×**     |
+| 5,000     | 34.4s          | 14.3s          | 1.7s        | **20.2×**    | **8.4×**      |
 
 **Key Findings:**
-- GPU acceleration kicks in at N > 500 particles
-- Near-linear GPU scaling: 2× particles ≈ 1.5× time (vs. 3.3× for CPU)
-- Maximum tested speedup: **10.43× at 5000 particles**
-- CPU overhead dominates for small simulations (N < 500)
+- GPU acceleration activates at N ≥ 500 particles
+- OpenMP provides ~2.4× speedup over single thread for large N
+- GPU provides up to **27× speedup vs OpenMP** at N=2000
+- Best performance: GPU for N ≥ 500, OpenMP for 100 ≤ N < 500, single thread for N < 100
+- Numerical safeguards prevent NaN overflow at high densities (N=5000 verified stable)
 
 ### Running Benchmarks
 
 ```bash
-# Run comprehensive benchmark suite
+# Run comprehensive three-way benchmark suite
 ./benchmark.sh
 
 # Results saved to:
-# - benchmark_results.csv (raw data)
-# - benchmark_plot.png (performance comparison)
-# - speedup_plot.png (GPU speedup visualization)
+# - benchmark_results.csv (raw timing data)
+# - benchmark_plots.html (interactive Plotly visualization)
+# - benchmark_plots.png (high-resolution static plot)
 ```
+
+**Benchmark generates 3 subplots:**
+1. Execution time vs particle count (log scale)
+2. Speedup comparison for small systems (N ≤ 500)
+3. Speedup comparison for large systems (N ≥ 1000)
 
 ### Optimization Tips
 
-**For CPU version:**
-1. Adjust thread count in `cpu_openmp/abp_3D_confine.cpp`:
-```cpp
-#define N_thread 6  // Set to your CPU core count
+**For all versions:**
+1. Adjust thread count in `parameter.txt` (11th parameter):
 ```
+0.01  1e-4  1000  10.1  0.0  0.0  15.0  15.0  1000  100  12
+```
+Set `N_thread` to your CPU core count for optimal performance.
 
 **For GPU version:**
-2. Modify GPU threshold in `gpu_hybrid/abp_3D_confine.cpp`:
+2. Modify GPU threshold in `gpu_hybrid/abp_3D_confine.cpp` (around line 64):
 ```cpp
-#define GPU_PARTICLE_THRESHOLD 500  // Lower for earlier GPU usage
+const int GPU_PARTICLE_THRESHOLD = 500;  // Lower for earlier GPU usage
 ```
 
 **General:**
-3. Reduce output frequency for faster execution:
-```cpp
-if (time % 100 == 0)  // Save every 100 steps instead of 10
+3. Reduce output frequency in `parameter.txt`:
 ```
+0.01  1e-4  5000  10.1  0.0  0.0  15.0  15.0  1000  1000  6
+```
+Set `output_interval=1000` to save every 1000 steps instead of 100.
 
-4. Use smaller timesteps for accuracy vs. larger for speed
+4. Trade-off timestep size: smaller `delta` for accuracy vs. larger for speed
 
 ## Contributing
 
@@ -395,22 +412,25 @@ Contributions are welcome! Please follow these guidelines:
 
 ### Development Priorities
 - [ ] Implement unit tests
-- [ ] Add Python visualization tools
+- [x] ✅ Add Python visualization tools (Plotly-based benchmarking)
 - [ ] Create CMake build system
 - [ ] Add more boundary condition types
 - [ ] Implement adaptive timestep control
-- [ ] GPU acceleration support
+- [x] ✅ GPU acceleration support (Metal for Apple Silicon)
 
 ## License
 
-This project is licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0). See [LICENCE](LICENCE) file for details.
+This project is licensed under the **Apache License 2.0**. See [LICENCE](LICENCE) file for details.
 
 You are free to:
-- **Share** — copy and redistribute the material
-- **Adapt** — remix, transform, and build upon the material
+- **Use** — Use the software for any purpose
+- **Modify** — Modify the source code
+- **Distribute** — Distribute original or modified versions
+- **Patent Grant** — Receive patent rights from contributors
 
 Under the following terms:
-- **Attribution** — You must give appropriate credit
+- **Attribution** — Must provide proper credit and license notice
+- **State Changes** — Must document modifications made to the code
 
 ## Citation
 
@@ -419,9 +439,10 @@ If you use this code in your research, please cite:
 ```bibtex
 @software{vachier2023active,
   author = {Vachier, Jeremy},
-  title = {Active Particles in 3D Confinement},
-  year = {2023},
-  url = {https://github.com/jvachier/active_particles_in_3D}
+  title = {Active Particles in 3D Confinement: GPU-Accelerated Simulation Framework},
+  year = {2023-2025},
+  url = {https://github.com/jvachier/active_particles_in_3D},
+  note = {Includes Metal GPU acceleration for Apple Silicon}
 }
 ```
 

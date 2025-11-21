@@ -217,7 +217,7 @@ F(r) = -∇U(r) = 48ε/r^14
 - SIMD vectorization within threads
 - Scales well up to ~8 threads
 
-**Thread Count**: Set via `N_thread` macro (default: 6)
+**Thread Count**: Configurable via 11th parameter in `parameter.txt` (default: 6)
 
 ### Computational Complexity
 
@@ -234,7 +234,7 @@ F(r) = -∇U(r) = 48ε/r^14
 
 1. **Neighbor Lists**: Reduce interaction complexity from O(N²) to O(N)
 2. **Cell Lists**: Spatial partitioning for efficient neighbor search
-3. **GPU Acceleration**: Offload particle updates to CUDA/OpenCL
+3. **GPU Acceleration**: ✅ **Implemented** - Metal GPU for force calculations (see `gpu_hybrid/`)
 4. **Reduced Output**: Write data less frequently
 5. **Binary Output**: Replace CSV with binary format
 
@@ -355,6 +355,134 @@ class ParameterError : public std::exception { };
 class InitializationError : public std::exception { };
 ```
 
+## GPU Implementation (`gpu_hybrid/`)
+
+### Architecture
+
+The GPU hybrid version offloads O(N²) force calculations to Metal GPU while keeping other operations on CPU.
+
+**File Structure**:
+```
+gpu_hybrid/
+├── abp_3D_confine.cpp          # Main with GPU/CPU selection logic
+├── metal_compute.mm            # Metal API interface (Objective-C++)
+├── particle_interactions.metal # GPU compute shader
+├── compute_forces.cpp          # CPU fallback force calculation
+└── headers/
+    ├── metal_compute.h         # GPU interface header
+    └── compute_forces.h        # CPU force calculation header
+```
+
+### Metal Shader Implementation
+
+**Kernel Function** (`particle_interactions.metal`):
+```metal
+kernel void computeLJForces(
+    device float* x, device float* y, device float* z,
+    device float* fx, device float* fy, device float* fz,
+    constant float& prefactor,
+    constant uint& numParticles,
+    uint threadId [[thread_position_in_grid]])
+{
+    // Each GPU thread computes forces on one particle
+    float fx_local = 0.0f, fy_local = 0.0f, fz_local = 0.0f;
+    
+    for (uint j = 0; j < numParticles; j++) {
+        if (j == threadId) continue;
+        
+        float dx = x[j] - x[threadId];
+        float dy = y[j] - y[threadId];
+        float dz = z[j] - z[threadId];
+        float R2 = dx*dx + dy*dy + dz*dz;
+        
+        // Numerical safeguards
+        if (R2 < 0.25f) continue;  // Skip if distance < 0.5
+        
+        float R14 = R2 * R2 * R2 * R2 * R2 * R2 * R2;
+        float force_magnitude = min(prefactor / R14, 1e10f);
+        
+        fx_local += force_magnitude * dx;
+        fy_local += force_magnitude * dy;
+        fz_local += force_magnitude * dz;
+    }
+    
+    fx[threadId] = fx_local;
+    fy[threadId] = fy_local;
+    fz[threadId] = fz_local;
+}
+```
+
+### GPU Selection Logic
+
+**Threshold-based automatic selection**:
+```cpp
+const int GPU_PARTICLE_THRESHOLD = 500;
+
+if (Particles >= GPU_PARTICLE_THRESHOLD) {
+    // Use Metal GPU
+    metal_compute_forces(x, y, z, fx, fy, fz, prefactor, Particles);
+} else {
+    // Use CPU OpenMP
+    compute_forces_cpu(x, y, z, fx, fy, fz, prefactor, Particles, L);
+}
+```
+
+### Numerical Safeguards
+
+**Problem**: At high particle densities (N=5000), particles can get very close (R < 0.5), causing:
+- `R^14` → near zero
+- `force_magnitude = prefactor / R^14` → overflow to infinity
+- `position += force * dt` → NaN propagation
+
+**Solutions implemented**:
+1. **Minimum distance threshold**: Skip force calculation if R² < 0.25 (distance < 0.5)
+2. **Force capping**: `force_magnitude = min(force_magnitude, 1e10)`
+3. **Double precision on CPU, float on GPU**: Balances precision and performance
+
+### Performance Characteristics
+
+| Aspect | CPU (OpenMP) | GPU (Metal) |
+|--------|--------------|-------------|
+| Parallelism | Thread-level (6 threads) | Massive (1000+ cores) |
+| Memory | Shared, cache-friendly | Unified (Apple Silicon) |
+| Overhead | Low | High (buffer allocation, dispatch) |
+| Best for | N < 500 | N ≥ 500 |
+| Speedup | ~2-3× vs single thread | ~8-27× vs OpenMP |
+
+### Benchmarking System
+
+**Script**: `benchmark.sh`
+
+**Methodology**:
+1. Tests three modes: 1 CPU thread, 6 OpenMP threads, GPU Metal
+2. Particle counts: 100, 200, 500, 1000, 2000, 5000
+3. Extracts timing via sed: `Time taken: X seconds`
+4. Generates CSV: `benchmark_results.csv`
+5. Visualizes with Plotly: `visualize_benchmark.py`
+
+**Output**:
+- Interactive HTML plot (`benchmark_plots.html`)
+- High-resolution PNG (`benchmark_plots.png`)
+- 3 subplots: execution time (log scale), small-scale speedup, large-scale speedup
+
+### Known Issues and Fixes
+
+**Issue 1: NaN positions after t=0**
+- **Cause**: Division by zero in Metal shader when R² ≈ 0
+- **Fix**: Added `if (R2 < 0.25f) continue;` safeguard
+- **Status**: ✅ Resolved (Nov 2024)
+
+**Issue 2: NaN at high density (N=5000)**
+- **Cause**: Force overflow (R^14 → 0, force → ∞) at tight spacing
+- **Fix**: Added force cap `min(force, 1e10f)`
+- **Status**: ✅ Resolved (Nov 2024)
+
+**Issue 3: Missing z-coordinate update in overlap check**
+- **Cause**: `check_nooverlap.cpp` updated x, y but not z during repositioning
+- **Fix**: Added `z[j] = distribution(generator);`
+- **Impact**: Minor (didn't cause NaN, but could create overlaps)
+- **Status**: ✅ Resolved (Nov 2024)
+
 ## Future Extensions
 
 ### Potential Features
@@ -368,7 +496,7 @@ class InitializationError : public std::exception { };
 7. **Adaptive timestep**: Automatic stability control
 8. **Checkpointing**: Resume from saved state
 9. **Real-time visualization**: OpenGL/VTK rendering
-10. **Parameter sweeps**: Automated batch runs
+10. **Parameter sweeps**: ✅ **Implemented** - Automated via `benchmark.sh`
 
 ## References
 
@@ -386,5 +514,23 @@ class InitializationError : public std::exception { };
 ---
 
 **Last Updated**: November 2025  
-**Version**: 1.0  
-**Maintainer**: Jeremy Vachier
+**Version**: 2.0 (GPU Hybrid)  
+**Maintainer**: Jeremy Vachier  
+**License**: Apache 2.0
+
+### Changelog
+
+**v2.0 (Nov 2024)**
+- Added Metal GPU acceleration for Apple Silicon
+- Implemented automatic CPU/GPU selection (N ≥ 500 threshold)
+- Added numerical safeguards to prevent NaN overflow
+- Made N_thread configurable via parameter.txt
+- Created comprehensive benchmark system with Plotly visualization
+- Fixed missing z-coordinate update in overlap detection
+- Changed license to Apache 2.0
+
+**v1.0 (2023)**
+- Initial CPU-only OpenMP implementation
+- 3D Langevin dynamics with Euler-Maruyama integration
+- Cylindrical reflective boundary conditions
+- CSV output for trajectory analysis
