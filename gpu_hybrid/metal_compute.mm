@@ -28,7 +28,7 @@ MetalCompute::MetalCompute() : currentBufferSize(0) {
     if (!mtlDevice) {
         throw std::runtime_error("Failed to create Metal device");
     }
-    device = (__bridge_retained void*)mtlDevice;
+    device = (__bridge void*)mtlDevice;
     
     std::cout << "Metal GPU: " << [mtlDevice name].UTF8String << std::endl;
     
@@ -37,7 +37,7 @@ MetalCompute::MetalCompute() : currentBufferSize(0) {
     if (!mtlQueue) {
         throw std::runtime_error("Failed to create Metal command queue");
     }
-    commandQueue = (__bridge_retained void*)mtlQueue;
+    commandQueue = (__bridge void*)mtlQueue;
     
     // Load Metal shader library
     NSError* error = nil;
@@ -67,7 +67,7 @@ MetalCompute::MetalCompute() : currentBufferSize(0) {
         msg += [errorMsg UTF8String];
         throw std::runtime_error(msg);
     }
-    library = (__bridge_retained void*)mtlLibrary;
+    library = (__bridge void*)mtlLibrary;
     
     // Get compute function
     id<MTLFunction> kernelFunction = [mtlLibrary 
@@ -88,7 +88,7 @@ MetalCompute::MetalCompute() : currentBufferSize(0) {
         msg += [errorMsg UTF8String];
         throw std::runtime_error(msg);
     }
-    pipelineState = (__bridge_retained void*)mtlPipeline;
+    pipelineState = (__bridge void*)mtlPipeline;
     
     // Initialize buffer pointers
     bufferX = nullptr;
@@ -158,12 +158,12 @@ void MetalCompute::ensureBufferSize(int numParticles) {
         throw std::runtime_error("Failed to allocate Metal buffers");
     }
     
-    bufferX = (__bridge_retained void*)bx;
-    bufferY = (__bridge_retained void*)by;
-    bufferZ = (__bridge_retained void*)bz;
-    bufferFX = (__bridge_retained void*)bfx;
-    bufferFY = (__bridge_retained void*)bfy;
-    bufferFZ = (__bridge_retained void*)bfz;
+    bufferX = (__bridge void*)bx;
+    bufferY = (__bridge void*)by;
+    bufferZ = (__bridge void*)bz;
+    bufferFX = (__bridge void*)bfx;
+    bufferFY = (__bridge void*)bfy;
+    bufferFZ = (__bridge void*)bfz;
     
     currentBufferSize = numParticles;
 }

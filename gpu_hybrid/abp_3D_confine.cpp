@@ -60,7 +60,6 @@
 #endif
 
 #define PI 3.141592653589793
-#define N_thread 6
 #define GPU_PARTICLE_THRESHOLD 500  // Use GPU when N > this threshold
 
 using namespace std;
@@ -84,9 +83,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  // Set number of OpenMP threads for parallelization
-  omp_set_num_threads(N_thread);
-
   // Simulation parameters read from file
   double epsilon;     // Interaction strength (Lennard-Jones potential depth)
   double delta;       // Time step size
@@ -98,16 +94,20 @@ int main(int argc, char *argv[]) {
   int Particles;      // Number of particles in simulation
   int N;              // Total number of time iterations
   int output_interval; // Save data every N timesteps
+  int N_thread;       // Number of OpenMP threads
 
   // Read parameters from tab-separated file
-  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\n", \
-    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval);
+  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n", \
+    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval, &N_thread);
   fclose(parameter);
+  
+  // Set number of OpenMP threads for parallelization
+  omp_set_num_threads(N_thread);
   
   // Echo parameters to console for verification
   printf("Simulation parameters:\n");
-  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d\n", \
-    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval);
+  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d N_thread=%d\n", \
+    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval, N_thread);
 
   // Validate parameters
   if (epsilon < 0.0) {
@@ -198,21 +198,9 @@ int main(int argc, char *argv[]) {
   uniform_real_distribution<double> distribution(-Wall, Wall);  // For initial positions
   uniform_real_distribution<double> distribution_e(0.0, 1.0);  // For orientation noise
 
-  // Stochastic noise variables (Gaussian white noise)
-  double xi_px = 0.0;  // Translational noise in x-direction
-  double xi_py = 0.0;  // Translational noise in y-direction
-  double xi_pz = 0.0;  // Translational noise in z-direction
-  double xi_ex = 0.0;  // Rotational noise for ex component
-  double xi_ey = 0.0;  // Rotational noise for ey component
-  double xi_ez = 0.0;  // Rotational noise for ez component
-
   // Pre-computed prefactors for Euler-Maruyama integration
   double prefactor_e = sqrt(2.0 * delta * De);           // Orientation diffusion prefactor
-  double prefactor_xi_px = sqrt(2.0 * delta * Dt);       // x-position noise prefactor
-  double prefactor_xi_py = sqrt(2.0 * delta * Dt);       // y-position noise prefactor
-  double prefactor_xi_pz = sqrt(2.0 * delta * Dt);       // z-position noise prefactor
   double prefactor_interaction = epsilon * 48.0;         // Lennard-Jones force prefactor
-  double r = 5.0 * L;  // Interaction cutoff radius (5 particle diameters)
 
   // Allocate force arrays
   vector<double> fx(Particles);

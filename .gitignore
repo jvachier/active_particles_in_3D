@@ -101,3 +101,6 @@ ehthumbs.db
 
 # macOS specific
 *.dSYM
+
+# Virtual environments
+*.venv

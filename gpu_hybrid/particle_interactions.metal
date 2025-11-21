@@ -67,6 +67,11 @@ kernel void computeLJForces(
         
         // Distance squared and to various powers
         float R2 = dx*dx + dy*dy + dz*dz;
+        
+        // Skip if particles are too close (avoid division by zero and overflow)
+        // Minimum distance threshold: 0.5 (about half the particle diameter)
+        if (R2 < 0.25f) continue;
+        
         float R4 = R2 * R2;
         float R8 = R4 * R4;
         float R14 = R8 * R4 * R2;
@@ -74,6 +79,9 @@ kernel void computeLJForces(
         // Lennard-Jones force (repulsive only)
         // F_ij = prefactor * (r_j - r_i) / R^14
         float force_magnitude = prefactor / R14;
+        
+        // Cap force magnitude to prevent overflow
+        force_magnitude = min(force_magnitude, 1e10f);
         
         fx_local += force_magnitude * dx;
         fy_local += force_magnitude * dy;

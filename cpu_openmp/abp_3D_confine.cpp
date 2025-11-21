@@ -50,7 +50,6 @@
 #include "headers/check_nooverlap.h"
 
 #define PI 3.141592653589793
-#define N_thread 6
 
 using namespace std;
 
@@ -73,9 +72,6 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  // Set number of OpenMP threads for parallelization
-  omp_set_num_threads(N_thread);
-
   // Simulation parameters read from file
   double epsilon;     // Interaction strength (Lennard-Jones potential depth)
   double delta;       // Time step size
@@ -87,16 +83,20 @@ int main(int argc, char *argv[]) {
   int Particles;      // Number of particles in simulation
   int N;              // Total number of time iterations
   int output_interval; // Save data every N timesteps
+  int N_thread;       // Number of OpenMP threads
 
   // Read parameters from tab-separated file
-  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\n", \
-    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval);
+  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n", \
+    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval, &N_thread);
   fclose(parameter);
+  
+  // Set number of OpenMP threads for parallelization
+  omp_set_num_threads(N_thread);
   
   // Echo parameters to console for verification
   printf("Simulation parameters:\n");
-  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d\n", \
-    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval);
+  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d N_thread=%d\n", \
+    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval, N_thread);
 
   // Validate parameters
   if (epsilon < 0.0) {

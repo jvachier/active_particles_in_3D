@@ -46,6 +46,7 @@ void check_nooverlap(
             // Generate new random position for particle j
             x[j] = distribution(generator);
             y[j] = distribution(generator);
+            z[j] = distribution(generator);
             
             // Recompute distance with new position
             R = sqrt((x[j] - x[k]) * (x[j] - x[k]) \
