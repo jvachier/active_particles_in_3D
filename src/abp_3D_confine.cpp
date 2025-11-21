@@ -86,16 +86,17 @@ int main(int argc, char *argv[]) {
   double height;      // Cylinder height
   int Particles;      // Number of particles in simulation
   int N;              // Total number of time iterations
+  int output_interval; // Save data every N timesteps
 
   // Read parameters from tab-separated file
-  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\n", \
-    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N);
+  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\n", \
+    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval);
   fclose(parameter);
   
   // Echo parameters to console for verification
   printf("Simulation parameters:\n");
-  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d\n", \
-    epsilon, delta, Particles, Dt, De, vs, Wall, height, N);
+  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d\n", \
+    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval);
 
   // Validate parameters
   if (epsilon < 0.0) {
@@ -145,6 +146,14 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: Number of iterations must be positive (got %d)\n", N);
     fclose(datacsv);
     return EXIT_FAILURE;
+  }
+  if (output_interval <= 0) {
+    fprintf(stderr, "Error: Output interval must be positive (got %d)\n", output_interval);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (output_interval > N) {
+    fprintf(stderr, "Warning: Output interval (%d) is larger than total iterations (%d)\n", output_interval, N);
   }
   
   // Check if output file was created successfully
@@ -229,8 +238,8 @@ int main(int argc, char *argv[]) {
       x.data(), y.data(), z.data(), Particles,
       Wall, height, L);
 
-    // Save particle states every 10 timesteps to reduce file size
-    if (time % 10 == 0 && time >= 0) {
+    // Save particle states at specified intervals to reduce file size
+    if (time % output_interval == 0) {
       print_file(
         x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(),
         Particles, time,

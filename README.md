@@ -179,7 +179,7 @@ Time taken is 12.345678
 Edit `src/parameter.txt` to configure the simulation. The file contains a single line with tab-separated values:
 
 ```
-epsilon  delta  Particles  Dt  De  vs  Wall  height  N
+epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval
 ```
 
 ### Parameter Descriptions
@@ -195,22 +195,33 @@ epsilon  delta  Particles  Dt  De  vs  Wall  height  N
 | `Wall` | Cylinder radius | 5.0 - 50.0 | 15.0 |
 | `height` | Cylinder height | 5.0 - 50.0 | 15.0 |
 | `N` | Number of iterations | 1000 - 100000 | 10000 |
+| `output_interval` | Save frequency (timesteps) | 1 - 1000 | 10 |
 
 ### Example Configurations
 
 **Passive Brownian particles:**
 ```
-0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000
+0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000  10
 ```
 
 **Active particles without interactions:**
 ```
-0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000
+0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10
 ```
 
 **Active particles with strong interactions:**
 ```
-0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000
+0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10
+```
+
+**High-resolution output (save every timestep):**
+```
+0.01  1e-4  100  1.0  1.0  5.0  10.0  10.0  1000  1
+```
+
+**Low-resolution output (save every 100 timesteps):**
+```
+0.01  1e-4  200  1.0  1.0  5.0  15.0  15.0  10000  100
 ```
 
 ## Output
@@ -231,7 +242,7 @@ Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orie
 - **ex,ey,ez-orientation**: Unit orientation vector components
 - **time**: Simulation timestep
 
-**Note:** Data is saved every 10 timesteps by default.
+**Note:** Data is saved at intervals specified by the `output_interval` parameter (default: every 10 timesteps).
 
 ## Visualizations
 
