@@ -4,7 +4,8 @@
 CXX = g++-14
 CXXFLAGS = -std=c++17 -Wall -g
 OPENMP_FLAGS = -fopenmp -fopenmp-simd
-SRC_DIR = ../src
+# Use cpu_openmp as source since it's cross-platform
+SRC_DIR = ../cpu_openmp
 TEST_DIR = .
 
 # Test executables

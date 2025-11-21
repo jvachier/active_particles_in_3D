@@ -4,7 +4,7 @@
  * @author Jeremy Vachier
  * @date 2025
  * 
- * Compile: g++-14 -std=c++17 -I../src test_boundary_conditions.cpp ../src/cylindrical_reflective_boundary_conditions.cpp -o test_boundary_conditions.out
+ * Compile: g++-14 -std=c++17 -I../cpu_openmp test_boundary_conditions.cpp ../cpu_openmp/cylindrical_reflective_boundary_conditions.cpp -o test_boundary_conditions.out
  * Run: ./test_boundary_conditions.out
  */
 
@@ -12,7 +12,7 @@
 #include <cmath>
 #include <cassert>
 #include <vector>
-#include "../src/headers/cylindrical_reflective_boundary_conditions.h"
+#include "../cpu_openmp/headers/cylindrical_reflective_boundary_conditions.h"
 
 using namespace std;
 

@@ -4,7 +4,7 @@
  * @author Jeremy Vachier
  * @date 2025
  * 
- * Compile: g++-14 -std=c++17 -fopenmp -I../src test_initialization.cpp ../src/initialization.cpp ../src/check_nooverlap.cpp -o test_initialization.out
+ * Compile: g++-14 -std=c++17 -fopenmp -I../cpu_openmp test_initialization.cpp ../cpu_openmp/initialization.cpp ../cpu_openmp/check_nooverlap.cpp -o test_initialization.out
  * Run: ./test_initialization.out
  */
 
@@ -13,8 +13,8 @@
 #include <cassert>
 #include <vector>
 #include <random>
-#include "../src/headers/initialization.h"
-#include "../src/headers/check_nooverlap.h"
+#include "../cpu_openmp/headers/initialization.h"
+#include "../cpu_openmp/headers/check_nooverlap.h"
 
 using namespace std;
 
