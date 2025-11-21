@@ -1,7 +1,8 @@
 # Unit Tests Makefile
 # Compile and run tests for the Active Particles 3D simulation
 
-CXX = g++-14
+# Use g++ by default, falls back to system default if g++-14 not available
+CXX ?= g++
 CXXFLAGS = -std=c++17 -Wall -g
 OPENMP_FLAGS = -fopenmp -fopenmp-simd
 # Use cpu_openmp as source since it's cross-platform
