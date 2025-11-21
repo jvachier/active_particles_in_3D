@@ -6,7 +6,7 @@
  * Provides C++ interface to Metal compute functionality.
  * 
  * @author Active Particles 3D Simulation
- * @date 2024
+ * @date 2025
  */
 
 #include "headers/metal_compute.h"

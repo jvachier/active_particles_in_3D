@@ -10,7 +10,7 @@ using namespace metal;
  * all other particles.
  * 
  * @author Active Particles 3D Simulation
- * @date 2024
+ * @date 2025
  */
 
 /**
