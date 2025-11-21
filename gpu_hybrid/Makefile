@@ -1,23 +1,25 @@
 # Detect macOS for Metal support
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-	# Use clang++ on macOS for Metal compatibility (requires same stdlib as Objective-C++)
+	# Use clang++ on macOS for Metal compatibility
 	CC = clang++ -O3 -std=c++17 -stdlib=libc++
-	CFLAGS = -Wall -g -Xpreprocessor -fopenmp -lomp
+	CFLAGS = -Wall -g -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include
+	LDFLAGS = -L/opt/homebrew/opt/libomp/lib -lomp
 	METAL_FLAGS = -framework Metal -framework Foundation
 	METAL_OBJS = metal_compute.o
 	OBJC_COMPILER = clang++ -x objective-c++ -O3 -std=c++17 -stdlib=libc++
 else
-	# Use g++ on other platforms
+	# Use g++ on other platforms (no Metal support)
 	CC = g++-14 -O3 -std=c++17
 	CFLAGS = -Wall -g -fopenmp -fopenmp-simd
+	LDFLAGS =
 	METAL_FLAGS =
 	METAL_OBJS =
 	OBJC_COMPILER =
 endif
 
 abp_3D_confine: abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o update_position_vectorized.o compute_forces.o check_nooverlap.o $(METAL_OBJS)
-	$(CC) $(CFLAGS) -o abp_3D_confine.out abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o update_position_vectorized.o compute_forces.o check_nooverlap.o $(METAL_OBJS) $(METAL_FLAGS)
+	$(CC) $(CFLAGS) -o abp_3D_confine.out abp_3D_confine.o print_file.o cylindrical_reflective_boundary_conditions.o initialization.o update_position.o update_position_vectorized.o compute_forces.o check_nooverlap.o $(METAL_OBJS) $(LDFLAGS) $(METAL_FLAGS)
 
 abp_3D_confine.o: abp_3D_confine.cpp
 	$(CC) $(CFLAGS) -c abp_3D_confine.cpp
@@ -46,7 +48,7 @@ compute_forces.o: compute_forces.cpp
 # Metal support (macOS only, requires Objective-C++)
 metal_compute.o: metal_compute.mm
 ifeq ($(UNAME_S),Darwin)
-	$(OBJC_COMPILER) -stdlib=libc++ -c metal_compute.mm -o metal_compute.o
+	$(OBJC_COMPILER) -I/opt/homebrew/opt/libomp/include -c metal_compute.mm -o metal_compute.o
 endif
 
 clean:

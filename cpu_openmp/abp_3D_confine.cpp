@@ -47,21 +47,10 @@
 #include "headers/cylindrical_reflective_boundary_conditions.h"
 #include "headers/initialization.h"
 #include "headers/update_position.h"
-#include "headers/update_position_vectorized.h"
 #include "headers/check_nooverlap.h"
-#include "headers/compute_forces.h"
-
-// Metal GPU acceleration (macOS only)
-#ifdef __APPLE__
-#include "headers/metal_compute.h"
-#define METAL_AVAILABLE 1
-#else
-#define METAL_AVAILABLE 0
-#endif
 
 #define PI 3.141592653589793
 #define N_thread 6
-#define GPU_PARTICLE_THRESHOLD 500  // Use GPU when N > this threshold
 
 using namespace std;
 
@@ -214,39 +203,6 @@ int main(int argc, char *argv[]) {
   double prefactor_interaction = epsilon * 48.0;         // Lennard-Jones force prefactor
   double r = 5.0 * L;  // Interaction cutoff radius (5 particle diameters)
 
-  // Allocate force arrays
-  vector<double> fx(Particles);
-  vector<double> fy(Particles);
-  vector<double> fz(Particles);
-
-  // Initialize Metal GPU compute (if available and beneficial)
-  bool use_gpu = false;
-  #if METAL_AVAILABLE
-  MetalCompute* metalCompute = nullptr;
-  
-  if (Particles > GPU_PARTICLE_THRESHOLD && MetalCompute::isAvailable()) {
-    try {
-      metalCompute = new MetalCompute();
-      use_gpu = true;
-      printf("Metal GPU acceleration enabled for %d particles\n", Particles);
-      printf("GPU Device: %s\n", metalCompute->getDeviceName());
-    } catch (const std::exception& e) {
-      printf("Failed to initialize Metal GPU: %s\n", e.what());
-      printf("Falling back to CPU (OpenMP) computation\n");
-      use_gpu = false;
-    }
-  } else {
-    if (Particles <= GPU_PARTICLE_THRESHOLD) {
-      printf("Using CPU (OpenMP) - particle count (%d) below GPU threshold (%d)\n", 
-             Particles, GPU_PARTICLE_THRESHOLD);
-    } else {
-      printf("Metal not available, using CPU (OpenMP) computation\n");
-    }
-  }
-  #else
-  printf("Metal not supported on this platform, using CPU (OpenMP) computation\n");
-  #endif
-
   // Start timing the simulation using OpenMP
   double itime, ftime, exec_time;
   itime = omp_get_wtime();
@@ -268,28 +224,14 @@ int main(int argc, char *argv[]) {
 
   // Main simulation loop: integrate equations of motion
   for (int time = 0; time < N; time++) {
-    // Update orientations first (independent of forces)
-    update_orientations(ex, ey, ez, prefactor_e, Particles, 
-                       generator, distribution_e);
-    
-    // Compute forces: GPU or CPU based on particle count
-    #if METAL_AVAILABLE
-    if (use_gpu) {
-      metalCompute->computeForces(x, y, z, fx, fy, fz, 
-                                  prefactor_interaction, Particles);
-    } else {
-      compute_forces_cpu(x, y, z, fx, fy, fz, 
-                        prefactor_interaction, Particles);
-    }
-    #else
-    compute_forces_cpu(x, y, z, fx, fy, fz, 
-                      prefactor_interaction, Particles);
-    #endif
-    
-    // Update positions with computed forces
-    update_positions_with_forces(x, y, z, ex, ey, ez, fx, fy, fz,
-                                delta, Dt, vs, Particles, 
-                                generator, Gaussdistribution);
+    // Update particle positions and orientations using Euler-Maruyama scheme
+    update_position(
+      x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(),
+      prefactor_e, Particles,
+      delta, De, Dt, xi_ex, xi_ey, xi_ez, xi_px,
+      xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz,
+      r, prefactor_interaction,
+      generator, Gaussdistribution, distribution_e);
 
     // Apply reflective boundary conditions at cylindrical walls
     cylindrical_reflective_boundary_conditions(
@@ -309,13 +251,6 @@ int main(int argc, char *argv[]) {
   ftime = omp_get_wtime();
   exec_time = ftime - itime;
   printf("Simulation complete. Time taken: %.3f seconds\n", exec_time);
-
-  // Cleanup Metal resources
-  #if METAL_AVAILABLE
-  if (metalCompute) {
-    delete metalCompute;
-  }
-  #endif
 
   // Vectors automatically deallocate memory when going out of scope
   // No need for manual memory management!
