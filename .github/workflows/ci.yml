@@ -70,6 +70,8 @@ jobs:
     - name: Run small simulation (smoke test)
       run: |
         cd cpu_openmp
+        # Create data directory if it doesn't exist
+        mkdir -p data
         # Create test parameter file with 10 particles for quick test
         echo -e "0.01\t1e-4\t10\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
         timeout 30s ./abp_3D_confine.out || exit 1
@@ -121,6 +123,8 @@ jobs:
     - name: Run small simulation (CPU mode)
       run: |
         cd gpu_hybrid
+        # Create data directory if it doesn't exist
+        mkdir -p data
         # Create test parameter file with 100 particles (below GPU threshold)
         echo -e "0.01\t1e-4\t100\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
         timeout 30s ./abp_3D_confine.out || exit 1
@@ -180,18 +184,21 @@ jobs:
           
           # CPU single thread
           cd cpu_openmp
+          mkdir -p data
           echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t1" > parameter.txt
           CPU_SINGLE=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
           cd ..
           
           # CPU OpenMP
           cd cpu_openmp
+          mkdir -p data
           echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
           CPU_OPENMP=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
           cd ..
           
           # GPU Hybrid
           cd gpu_hybrid
+          mkdir -p data
           echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
           GPU_METAL=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
           cd ..
