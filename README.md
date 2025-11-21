@@ -4,6 +4,9 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Language](https://img.shields.io/badge/language-C++17-blue.svg)](https://isocpp.org/)
 [![OpenMP](https://img.shields.io/badge/parallel-OpenMP-orange.svg)](https://www.openmp.org/)
+[![Metal](https://img.shields.io/badge/GPU-Metal-red.svg)](https://developer.apple.com/metal/)
+[![Python](https://img.shields.io/badge/python-uv-blue.svg)](https://github.com/astral-sh/uv)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/jvachier/active_particles_in_3D)
 
 A high-performance C++ simulation framework for modeling the dynamics of active Brownian particles (ABPs) under cylindrical confinement in three-dimensional space. This implementation uses the Euler-Maruyama algorithm to numerically solve coupled Langevin equations with OpenMP parallelization.
 
@@ -326,13 +329,13 @@ https://github.com/jvachier/active_particles_in_3D/assets/89128100/e0ea3d4e-58a5
 
 ![Particle positions](./cpu_openmp/figures/particles.png)
 
-*Snapshot of particle positions showing spatial organization within the cylindrical boundary.*
+*Figure: Snapshot of particle positions showing spatial organization within the cylindrical boundary.*
 
 ### Trajectory Analysis
 
 ![Particle trajectories](./cpu_openmp/figures/particles_time.png)
 
-*Time-resolved particle trajectories demonstrating complex motion patterns.*
+*Figure: Time-resolved particle trajectories demonstrating complex motion patterns.*
 
 ## Performance
 
@@ -359,6 +362,9 @@ Comprehensive three-way comparison on **Apple M2** with **1000 timesteps**:
 - GPU provides up to **27× speedup vs OpenMP** at N=2000
 - Best performance: GPU for N ≥ 500, OpenMP for 100 ≤ N < 500, single thread for N < 100
 - Numerical safeguards prevent NaN overflow at high densities (N=5000 verified stable)
+
+![Performance Comparison](benchmark_plots.png)
+*Figure: Performance comparison across implementations. **Left:** Execution time vs particle count showing GPU efficiency at scale. **Center:** Speedup for small systems (N ≤ 500) where CPU remains competitive. **Right:** Speedup for large systems (N ≥ 1000) demonstrating GPU's 27× advantage. All benchmarks run on Apple M2 with 1000 timesteps.*
 
 ### Running Benchmarks
 
@@ -411,14 +417,6 @@ Contributions are welcome! Please follow these guidelines:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Priorities
-- [ ] Implement unit tests
-- [x] ✅ Add Python visualization tools (Plotly-based benchmarking)
-- [ ] Create CMake build system
-- [ ] Add more boundary condition types
-- [ ] Implement adaptive timestep control
-- [x] ✅ GPU acceleration support (Metal for Apple Silicon)
-
 ## License
 
 This project is licensed under the **Apache License 2.0**. See [LICENCE](LICENCE) file for details.
@@ -449,16 +447,7 @@ If you use this code in your research, please cite:
 
 ## Contact
 
-**Jeremy Vachier**
+**Author: Jeremy Vachier**
 - GitHub: [@jvachier](https://github.com/jvachier)
 
-## Acknowledgments
-
-- Implementation based on the Euler-Maruyama numerical scheme for stochastic differential equations
-- OpenMP parallelization framework
-- Inspired by research on active matter physics
-
----
-
-**Project Status**: Active Development | **Version**: 1.0.0 | **Last Updated**: November 2025
 
