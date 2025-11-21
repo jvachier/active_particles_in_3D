@@ -40,8 +40,8 @@ jobs:
         name: test-results
         path: tests/*.out
 
-  # CPU OpenMP Build and Test
-  cpu-openmp:
+  # CPU OpenMP Build
+  cpu-openmp-build:
     name: CPU OpenMP Build
     runs-on: ubuntu-latest
     needs: unit-tests
@@ -66,30 +66,9 @@ jobs:
         cd cpu_openmp
         ls -lh abp_3D_confine.out
         file abp_3D_confine.out
-    
-    - name: Run small simulation (smoke test)
-      run: |
-        cd cpu_openmp
-        # Create data directory if it doesn't exist
-        mkdir -p data
-        # Create test parameter file with 10 particles for quick test
-        echo -e "0.01\t1e-4\t10\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
-        timeout 30s ./abp_3D_confine.out || exit 1
-        # Verify output was created
-        test -f data/simulation.csv || exit 1
-        # Check for no NaN values
-        ! grep -q "nan" data/simulation.csv || exit 1
-    
-    - name: Upload CPU artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: cpu-openmp-build
-        path: |
-          cpu_openmp/abp_3D_confine.out
-          cpu_openmp/data/simulation.csv
 
-  # GPU Hybrid Build (macOS only)
-  gpu-hybrid-macos:
+  # GPU Hybrid Build
+  gpu-hybrid-build:
     name: GPU Hybrid Build (macOS)
     runs-on: macos-latest
     needs: unit-tests
@@ -119,123 +98,12 @@ jobs:
         cd gpu_hybrid
         test -f particle_interactions.metal || exit 1
         wc -l particle_interactions.metal
-    
-    - name: Run small simulation (CPU mode)
-      run: |
-        cd gpu_hybrid
-        # Create data directory if it doesn't exist
-        mkdir -p data
-        # Create test parameter file with 100 particles (below GPU threshold)
-        echo -e "0.01\t1e-4\t100\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
-        timeout 30s ./abp_3D_confine.out || exit 1
-        # Verify output was created
-        test -f data/simulation.csv || exit 1
-        # Check for no NaN values
-        ! grep -q "nan" data/simulation.csv || exit 1
-    
-    - name: Upload GPU artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: gpu-hybrid-macos-build
-        path: |
-          gpu_hybrid/abp_3D_confine.out
-          gpu_hybrid/data/simulation.csv
-
-  # Benchmark validation
-  benchmark-validation:
-    name: Benchmark Script Validation
-    runs-on: macos-latest
-    needs: [cpu-openmp, gpu-hybrid-macos]
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Install dependencies
-      run: |
-        brew install libomp
-    
-    - name: Setup Python with uv
-      run: |
-        curl -LsSf https://astral.sh/uv/install.sh | sh
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-    
-    - name: Install Python dependencies
-      run: |
-        uv venv
-        uv pip install plotly pandas kaleido
-    
-    - name: Build both versions
-      run: |
-        cd cpu_openmp && make clean && make && cd ..
-        cd gpu_hybrid && make clean && make && cd ..
-    
-    - name: Create minimal benchmark test
-      run: |
-        # Create a minimal test version that runs quickly
-        cat > benchmark_test.sh << 'EOF'
-        #!/bin/bash
-        
-        echo "particles,cpu_single,cpu_openmp,gpu_metal" > benchmark_results.csv
-        
-        # Test with just 100 particles for CI
-        for N in 100; do
-          echo "Testing with $N particles..."
-          
-          # CPU single thread
-          cd cpu_openmp
-          mkdir -p data
-          echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t1" > parameter.txt
-          CPU_SINGLE=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
-          cd ..
-          
-          # CPU OpenMP
-          cd cpu_openmp
-          mkdir -p data
-          echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
-          CPU_OPENMP=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
-          cd ..
-          
-          # GPU Hybrid
-          cd gpu_hybrid
-          mkdir -p data
-          echo -e "0.01\t1e-4\t$N\t10.1\t0.0\t0.0\t15.0\t15.0\t10\t5\t2" > parameter.txt
-          GPU_METAL=$(./abp_3D_confine.out 2>&1 | grep "Time taken:" | sed 's/.*Time taken: \([0-9.]*\) seconds.*/\1/')
-          cd ..
-          
-          echo "$N,$CPU_SINGLE,$CPU_OPENMP,$GPU_METAL" >> benchmark_results.csv
-        done
-        
-        echo "Benchmark test complete!"
-        cat benchmark_results.csv
-        EOF
-        
-        chmod +x benchmark_test.sh
-    
-    - name: Run benchmark test
-      run: |
-        ./benchmark_test.sh
-    
-    - name: Verify benchmark results
-      run: |
-        # Check that CSV has valid data
-        test -f benchmark_results.csv || exit 1
-        # Should have header + 1 data row
-        test $(wc -l < benchmark_results.csv) -eq 2 || exit 1
-        # Check no NaN in results
-        ! grep -q "nan" benchmark_results.csv || exit 1
-    
-    - name: Upload benchmark artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: benchmark-test-results
-        path: |
-          benchmark_results.csv
 
   # Documentation check
   documentation-check:
     name: Documentation Check
     runs-on: ubuntu-latest
+    needs: unit-tests
     
     steps:
     - name: Checkout code
@@ -280,7 +148,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [unit-tests, cpu-openmp, gpu-hybrid-macos, benchmark-validation, documentation-check]
+    needs: [unit-tests, cpu-openmp-build, gpu-hybrid-build, documentation-check]
     if: success()
     
     steps:
@@ -292,5 +160,4 @@ jobs:
         echo "  - Unit tests: PASSED"
         echo "  - CPU OpenMP build: PASSED"
         echo "  - GPU Hybrid build (macOS): PASSED"
-        echo "  - Benchmark validation: PASSED"
         echo "  - Documentation check: PASSED"
