@@ -47,25 +47,27 @@ void cylindrical_reflective_boundary_conditions(
       }
       
       // --- Axial boundary (z direction) ---
-      D_AW_z = 0.0;
-      if (abs(z[k]) > height_L) {
-        // Compute penetration distance
-        D_AW_z = abs(z[k] + height);
+      if (z[k] > height_L) {
+        // Particle exceeded top boundary
+        D_AW_z = abs(z[k] - height_L);  // Distance from top boundary
         
         if (D_AW_z > 4.0 * L) {
-          // Large penetration: reposition near boundary
-          if (z[k] > height_L) {
-            z[k] = height - 2.0 * L;  // Place near top wall
-          } else if (z[k] < -height_L) {
-            z[k] = 2.0 * L - height;  // Place near bottom wall
-          }
+          // Large penetration: hard reset near boundary
+          z[k] = height - 2.0 * L;
         } else {
-          // Small penetration: symmetric reflection
-          if (z[k] > height_L) {
-            z[k] -= 2.0 * D_AW_z;  // Reflect from top
-          } else if (z[k] < -height_L) {
-            z[k] += 2.0 * D_AW_z;  // Reflect from bottom
-          }
+          // Small penetration: elastic reflection
+          z[k] = height_L - D_AW_z;
+        }
+      } else if (z[k] < -height_L) {
+        // Particle exceeded bottom boundary
+        D_AW_z = abs(z[k] + height_L);  // Distance from bottom boundary
+        
+        if (D_AW_z > 4.0 * L) {
+          // Large penetration: hard reset near boundary
+          z[k] = 2.0 * L - height;
+        } else {
+          // Small penetration: elastic reflection
+          z[k] = -height_L + D_AW_z;
         }
       }
     }

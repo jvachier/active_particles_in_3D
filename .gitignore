@@ -1,30 +1,103 @@
-# Ignore Mac system files
-.DS_store
-.dSYM
+# Compiled Object files
+*.o
+*.obj
 
-# Ignore all csv files
-*.csv
+# Executables
+*.out
+*.exe
+*.app
+abp_3D_confine
+abp_3D_confine.out
 
-# Ignore all png files
-# *.png
+# Data files (but keep parameter.txt!)
+data/*.csv
+!data/.gitkeep
+
+# Figure outputs
+figures/*.png
+figures/*.jpg
+figures/*.pdf
+figures/videos/*.mp4
+figures/videos/*.avi
+!figures/.gitkeep
+!figures/videos/.gitkeep
+
+# Temporary files
+*~
+*.swp
+*.swo
+.DS_Store
+.dSYM/
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Build directories
+build/
+build-*/
+cmake-build-*/
+
+# Test outputs
+tests/build/
+tests/*.out
+test_results/
+
+# Python cache (for analysis scripts)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+
+# Jupyter
+*.ipynb_checkpoints
+.ipynb_checkpoints/
+
+# Documentation generated files
+docs/_build/
+docs/html/
+docs/latex/
+
+# Backup files
+*.bak
+*.backup
+*.bin
+
+# Profiling and debugging
+*.log
+gmon.out
+callgrind.out.*
+massif.out.*
+
+# HTML output
 *.html
 
-# Ignore all text files
-*.txt
-*.bin
-*data/
-*videos/
-
-# Ignore specific file
-test.mp4
-
-# Ignore all executable files
-*.o
-*.out
-
-# Ignore jupyter checkpoints
-*.ipynb_checkpoints
-*.ipynb
-
-# Ignore all json file
+# JSON (except package.json, etc.)
 *.json
+!package.json
+!tsconfig.json
+
+# Package managers
+.conan/
+vcpkg_installed/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+
+# CSV files
+*.csv
+
+# Video files
+*/figures/videos/
+
+# Jupyter Notebooks
+*.ipynb 
+
+# macOS specific
+*.dSYM

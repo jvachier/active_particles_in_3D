@@ -90,27 +90,81 @@ int main(int argc, char *argv[]) {
   // Read parameters from tab-separated file
   fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\n", \
     &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N);
+  fclose(parameter);
   
   // Echo parameters to console for verification
   printf("Simulation parameters:\n");
   printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d\n", \
     epsilon, delta, Particles, Dt, De, vs, Wall, height, N);
 
-  // Allocate memory for particle positions (x, y, z coordinates)
-  double *x = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
-  double *y = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
-  double *z = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
+  // Validate parameters
+  if (epsilon < 0.0) {
+    fprintf(stderr, "Error: epsilon must be non-negative (got %lf)\n", epsilon);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (delta <= 0.0) {
+    fprintf(stderr, "Error: delta (timestep) must be positive (got %lf)\n", delta);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (Particles <= 0) {
+    fprintf(stderr, "Error: Number of particles must be positive (got %d)\n", Particles);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (Particles > 10000) {
+    fprintf(stderr, "Warning: Large number of particles (%d) may cause slow performance\n", Particles);
+  }
+  if (Dt < 0.0) {
+    fprintf(stderr, "Error: Translational diffusion Dt must be non-negative (got %lf)\n", Dt);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (De < 0.0) {
+    fprintf(stderr, "Error: Rotational diffusion De must be non-negative (got %lf)\n", De);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (vs < 0.0) {
+    fprintf(stderr, "Error: Self-propulsion velocity vs must be non-negative (got %lf)\n", vs);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (Wall <= 0.0) {
+    fprintf(stderr, "Error: Cylinder radius (Wall) must be positive (got %lf)\n", Wall);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (height <= 0.0) {
+    fprintf(stderr, "Error: Cylinder height must be positive (got %lf)\n", height);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  if (N <= 0) {
+    fprintf(stderr, "Error: Number of iterations must be positive (got %d)\n", N);
+    fclose(datacsv);
+    return EXIT_FAILURE;
+  }
+  
+  // Check if output file was created successfully
+  if (datacsv == NULL) {
+    fprintf(stderr, "Error: Cannot create output file ./data/simulation.csv\n");
+    fprintf(stderr, "Make sure the data/ directory exists.\n");
+    return EXIT_FAILURE;
+  }
+  
+  printf("Parameters validated successfully.\n");
 
-  // Allocate memory for particle orientations (unit vector components)
-  double *ex = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
-  double *ey = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
-  double *ez = reinterpret_cast<double*> \
-    (malloc(Particles * sizeof(double)));
+  // Allocate memory for particle positions and orientations using std::vector
+  // Modern C++ approach - automatic memory management, no manual free() needed
+  vector<double> x(Particles);
+  vector<double> y(Particles);
+  vector<double> z(Particles);
+  
+  vector<double> ex(Particles);
+  vector<double> ey(Particles);
+  vector<double> ez(Particles);
 
   // Physical constants
   const int L = 1.0;  // Particle diameter (characteristic length scale)
@@ -150,12 +204,12 @@ int main(int argc, char *argv[]) {
 
   // Initialize particle positions and orientations randomly within the cylinder
   initialization(
-    x, y, z, ex, ey, ez, Particles,
+    x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(), Particles,
     generator, distribution, distribution_e);
 
   // Verify no particles overlap initially (enforce minimum separation)
   check_nooverlap(
-    x, y, z, Particles, L,
+    x.data(), y.data(), z.data(), Particles, L,
     generator, distribution);
   printf("Initialization complete. Starting simulation...\n");
 
@@ -163,7 +217,8 @@ int main(int argc, char *argv[]) {
   for (int time = 0; time < N; time++) {
     // Update particle positions and orientations using Euler-Maruyama scheme
     update_position(
-      x, y, z, ex, ey, ez, prefactor_e, Particles,
+      x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(),
+      prefactor_e, Particles,
       delta, De, Dt, xi_ex, xi_ey, xi_ez, xi_px,
       xi_py, xi_pz, vs, prefactor_xi_px, prefactor_xi_py, prefactor_xi_pz,
       r, prefactor_interaction,
@@ -171,13 +226,13 @@ int main(int argc, char *argv[]) {
 
     // Apply reflective boundary conditions at cylindrical walls
     cylindrical_reflective_boundary_conditions(
-      x, y, z, Particles,
+      x.data(), y.data(), z.data(), Particles,
       Wall, height, L);
 
     // Save particle states every 10 timesteps to reduce file size
     if (time % 10 == 0 && time >= 0) {
       print_file(
-        x, y, z, ex, ey, ez,
+        x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(),
         Particles, time,
         datacsv);
       }
@@ -188,17 +243,11 @@ int main(int argc, char *argv[]) {
   exec_time = ftime - itime;
   printf("Simulation complete. Time taken: %.3f seconds\n", exec_time);
 
-  // Free dynamically allocated memory
-  free(x);
-  free(y);
-  free(z);
-  free(ex);
-  free(ey);
-  free(ez);
+  // Vectors automatically deallocate memory when going out of scope
+  // No need for manual memory management!
 
   // Close output file
   fclose(datacsv);
-  fclose(parameter);
   
   printf("Results saved to ./data/simulation.csv\n");
   return 0;
