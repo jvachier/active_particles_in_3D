@@ -1,0 +1,11 @@
+[project]
+name = "active-particles-in-3d"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "kaleido>=1.2.0",
+    "pandas>=2.3.3",
+    "plotly>=6.5.0",
+]

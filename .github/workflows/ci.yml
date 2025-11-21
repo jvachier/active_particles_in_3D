@@ -1,0 +1,163 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Unit Tests
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++-13 libomp-dev
+    
+    - name: Build tests
+      run: |
+        cd tests
+        make clean
+        CXX=g++-13 make all
+    
+    - name: Run unit tests
+      run: |
+        cd tests
+        make test
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: tests/*.out
+
+  # CPU OpenMP Build
+  cpu-openmp-build:
+    name: CPU OpenMP Build
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential g++-13 libomp-dev
+    
+    - name: Build CPU OpenMP version
+      run: |
+        cd cpu_openmp
+        make clean
+        CC=g++-13 make
+    
+    - name: Verify executable
+      run: |
+        cd cpu_openmp
+        ls -lh abp_3D_confine.out
+        file abp_3D_confine.out
+
+  # GPU Hybrid Build
+  gpu-hybrid-build:
+    name: GPU Hybrid Build (macOS)
+    runs-on: macos-latest
+    needs: unit-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        brew install libomp
+    
+    - name: Build GPU Hybrid version
+      run: |
+        cd gpu_hybrid
+        make clean
+        make
+    
+    - name: Verify executable
+      run: |
+        cd gpu_hybrid
+        ls -lh abp_3D_confine.out
+        file abp_3D_confine.out
+    
+    - name: Check Metal shader file
+      run: |
+        cd gpu_hybrid
+        test -f particle_interactions.metal || exit 1
+        wc -l particle_interactions.metal
+
+  # Documentation check
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Check README exists
+      run: |
+        test -f README.md || exit 1
+        test -f cpu_openmp/README.md || exit 1
+        test -f gpu_hybrid/README.md || exit 1
+        test -f docs/CODE_DOCUMENTATION.md || exit 1
+        test -f tests/README.md || exit 1
+    
+    - name: Check LICENSE file
+      run: |
+        test -f LICENCE || exit 1
+        grep -q "Apache License" LICENCE || exit 1
+    
+    - name: Validate parameter.txt format
+      run: |
+        # Check that parameter.txt files have 11 tab-separated values
+        cd cpu_openmp
+        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
+        cd ../gpu_hybrid
+        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
+    
+    - name: Check for broken links in README
+      run: |
+        # Simple check for relative file references
+        for file in README.md cpu_openmp/README.md gpu_hybrid/README.md; do
+          echo "Checking $file..."
+          # Extract relative links and verify files exist
+          grep -o '\[.*\]([^)]*\.md)' $file | sed 's/.*(\(.*\))/\1/' | while read link; do
+            if [[ $link != http* ]]; then
+              dir=$(dirname $file)
+              test -f "$dir/$link" || (echo "Broken link: $link in $file" && exit 1)
+            fi
+          done
+        done
+
+  # Summary job
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [unit-tests, cpu-openmp-build, gpu-hybrid-build, documentation-check]
+    if: success()
+    
+    steps:
+    - name: Success message
+      run: |
+        echo "✅ All CI/CD checks passed!"
+        echo ""
+        echo "Summary:"
+        echo "  - Unit tests: PASSED"
+        echo "  - CPU OpenMP build: PASSED"
+        echo "  - GPU Hybrid build (macOS): PASSED"
+        echo "  - Documentation check: PASSED"
