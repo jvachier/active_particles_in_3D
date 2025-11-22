@@ -54,7 +54,7 @@ This repository provides **two optimized implementations**:
 | **GPU Speedup vs 1 CPU** | - | - | 0.3× | **9.3×** | **20.2×** |
 | **GPU Speedup vs OpenMP** | - | - | 0.9× | **3.9×** | **8.4×** |
 
-> 💡 **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
+> **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
 
 ## Overview
 
@@ -67,42 +67,27 @@ Active particles are self-propelled entities that convert internal energy into d
 - Modeling biological systems (bacterial suspensions, cell motility)
 
 ## Mathematical Model
+The dynamics is given by two Langevin equations, one for the position $\tilde{\mathbf{r}} = (\tilde{x}, \tilde{y}, \tilde{z})$ of the particles and one for its orientation $\mathbf{e}$:
 
-The system dynamics is governed by two coupled stochastic differential equations:
-
-**Position dynamics:**
 $$
-\frac{d}{d\tilde{t}}\mathbf{\tilde{r}} = \tilde{v_s}\mathbf{e} - \tilde{\nabla}_{\tilde{R}}(\tilde{U}) + \sqrt{2\tilde{D}_t}\tilde{\mathbf{\xi}_t}
+\frac{d}{d\tilde{t}}\tilde{\mathbf{r}} = \tilde{v_s}\mathbf{e} - \tilde{\nabla}_{\tilde{R}}(\widetilde{LP}) + \sqrt{2\tilde{D}_t}\tilde{\boldsymbol{\xi}_t}\,,
 $$
 
-**Orientation dynamics:**
 $$
-\frac{d}{d\tilde{t}}\mathbf{e} = \sqrt{2\tilde{D}_e}\mathbf{e}\times\tilde{\mathbf{\xi}_e}
+\frac{d}{d\tilde{t}}\mathbf{e} = \sqrt{2\tilde{D}_e}\mathbf{e}\times\tilde{\boldsymbol{\xi}_e}\,,
 $$
 
-### Parameters
-
-| Symbol | Description | Unit |
-|--------|-------------|------|
-| $\mathbf{\tilde{r}}$ | Particle position vector $(x, y, z)$ | Length |
-| $\mathbf{e}$ | Orientation unit vector $(e_x, e_y, e_z)$ | Dimensionless |
-| $\tilde{v_s}$ | Self-propulsion velocity | Length/Time |
-| $\tilde{D_t}$ | Translational diffusion coefficient | Length²/Time |
-| $\tilde{D_e}$ | Rotational diffusion coefficient | 1/Time |
-| $\tilde{\mathbf{\xi}_t}, \tilde{\mathbf{\xi}_e}$ | Gaussian white noise | - |
+where $\mathbf{e} = (e_x, e_y, e_z)^T$ is the orientational unit vector, $\tilde{v_s}$ is the self-propulsion velocity, $\tilde{D}_t$ and $\tilde{D}_e$ are the translational and rotational diffusivities, respectively. Moreover, $\langle\tilde{\xi}_{t}^{i}(\tilde{t}')\tilde{\xi}_{t}^{j}(\tilde{t})\rangle = \delta_{ij}\delta(\tilde{t}'-\tilde{t})$ and $\langle\tilde{\xi}_{e}^{i}(\tilde{t}')\tilde{\xi}_{e}^{j}(\tilde{t})\rangle = \delta_{ij}\delta(\tilde{t}'-\tilde{t})$ are two Gaussian white noises.
 
 ### Interaction Potential
 
 Particle-particle interactions are modeled using the repulsive part of the Lennard-Jones potential:
 
 $$
-\tilde{U}(\tilde{R}) = 4\tilde{\epsilon}\left[\left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{12} - \left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{6}\right]
+\widetilde{LP} = 4\tilde{\epsilon}\left[\left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{12} - \left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{6}\right]\,,
 $$
 
-where:
-- $\tilde{\epsilon}$: Interaction strength (depth of potential well)
-- $\tilde{\sigma}$: Characteristic length scale
-- $\tilde{R}$: Inter-particle distance
+where $\tilde{\epsilon}$ is the depth of the potential well and $\tilde{R}$ is the distance between two interacting particles. 
 
 **Note:** Only the repulsive component ($\tilde{R} < 2^{1/6}\tilde{\sigma}$) is considered in this implementation.
 
