@@ -54,7 +54,7 @@ This repository provides **two optimized implementations**:
 | **GPU Speedup vs 1 CPU** | - | - | 0.3× | **9.3×** | **20.2×** |
 | **GPU Speedup vs OpenMP** | - | - | 0.9× | **3.9×** | **8.4×** |
 
-> 💡 **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
+> **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
 
 ## Overview
 
@@ -71,13 +71,15 @@ Active particles are self-propelled entities that convert internal energy into d
 The system dynamics is governed by two coupled stochastic differential equations:
 
 **Position dynamics:**
+
 $$
-\frac{d}{d\tilde{t}}\mathbf{\tilde{r}} = \tilde{v_s}\mathbf{e} - \tilde{\nabla}_{\tilde{R}}(\tilde{U}) + \sqrt{2\tilde{D}_t}\tilde{\mathbf{\xi}_t}
+\frac{d}{d\tilde{t}}\mathbf{\tilde{r}} = \tilde{v_s}\mathbf{e} - \tilde{\nabla}_{\tilde{R}}(\tilde{U}) + \sqrt{2\tilde{D}_t}\tilde{\mathbf{\xi}_t}\,.
 $$
 
 **Orientation dynamics:**
+
 $$
-\frac{d}{d\tilde{t}}\mathbf{e} = \sqrt{2\tilde{D}_e}\mathbf{e}\times\tilde{\mathbf{\xi}_e}
+\frac{d}{d\tilde{t}}\mathbf{e} = \sqrt{2\tilde{D}_e}\mathbf{e}\times\tilde{\mathbf{\xi}_e}\,.
 $$
 
 ### Parameters
@@ -96,7 +98,7 @@ $$
 Particle-particle interactions are modeled using the repulsive part of the Lennard-Jones potential:
 
 $$
-\tilde{U}(\tilde{R}) = 4\tilde{\epsilon}\left[\left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{12} - \left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{6}\right]
+\tilde{U}(\tilde{R}) = 4\tilde{\epsilon}\left[\left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{12} - \left(\frac{\tilde{\sigma}}{\tilde{R}}\right)^{6}\right]\,,
 $$
 
 where:
