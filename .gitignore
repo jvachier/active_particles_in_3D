@@ -108,4 +108,7 @@ ehthumbs.db
 # Video files
 *.mp4
 
+# Temporary frames
+temp_frames/
+
 DEPENDENCY_MANAGEMENT.md

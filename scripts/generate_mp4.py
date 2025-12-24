@@ -20,20 +20,55 @@ Usage:
 
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
 import logging
 import subprocess
 import shutil
 from pathlib import Path
+import os
+import sys
+from contextlib import contextmanager
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+# Suppress all kaleido logging BEFORE importing plotly
+os.environ["KALEIDO_LOGGING"] = "off"
+
+# Configure logging to only show WARNING and above for ALL modules
+logging.basicConfig(level=logging.WARNING)
+
+# Now import plotly
+import plotly.graph_objects as go
+
+# Set root logger to WARNING to suppress INFO from kaleido
+logging.getLogger().setLevel(logging.WARNING)
+
+# Create our own logger that shows INFO
+logger = logging.getLogger("generate_mp4")
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+logger.addHandler(handler)
+logger.propagate = False
+
+
+@contextmanager
+def suppress_stdout_stderr():
+    """Context manager to suppress stdout and stderr."""
+    with open(os.devnull, "w") as devnull:
+        old_stdout = sys.stdout
+        old_stderr = sys.stderr
+        sys.stdout = devnull
+        sys.stderr = devnull
+        try:
+            yield
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
 
 # Configuration
-INPUT_FILE = "data/simulation.bin"
-PARAMETER_FILE = "parameter.txt"
-OUTPUT_DIR = "figures"
-TEMP_FRAMES_DIR = "temp_frames"
+INPUT_FILE = "../data/simulation.bin"
+PARAMETER_FILE = "../parameter.txt"
+OUTPUT_DIR = "../figures"
+TEMP_FRAMES_DIR = "../temp_frames"
 TRACK_PERCENTAGE = 0.01  # 1% of particles
 FPS = 30  # Frames per second
 WIDTH = 1920
@@ -51,7 +86,7 @@ def read_parameters(parameter_file=PARAMETER_FILE):
                 "height": float(params[7]),
             }
     except Exception as e:
-        logging.warning(f"Error reading parameters: {e}. Using data-based dimensions.")
+        logger.warning(f"Error reading parameters: {e}. Using data-based dimensions.")
         return None
 
 
@@ -61,7 +96,7 @@ def read_binary_simulation(filename):
     if not input_path.exists():
         csv_path = input_path.with_suffix(".csv")
         if csv_path.exists():
-            logging.info(f"Binary file not found, using CSV: {csv_path}")
+            logger.info(f"Binary file not found, using CSV: {csv_path}")
             return read_csv_simulation(str(csv_path))
         else:
             raise FileNotFoundError(f"Neither {input_path} nor {csv_path} found")
@@ -70,7 +105,7 @@ def read_binary_simulation(filename):
         num_particles = np.fromfile(f, dtype=np.int32, count=1)[0]
         num_frames = np.fromfile(f, dtype=np.int32, count=1)[0]
 
-        logging.info(f"Reading binary: {num_particles} particles, {num_frames} frames")
+        logger.info(f"Reading binary: {num_particles} particles, {num_frames} frames")
 
         data = []
         for frame_idx in range(num_frames):
@@ -101,7 +136,7 @@ def read_binary_simulation(filename):
 
 def read_csv_simulation(filename):
     """Read simulation data from CSV file."""
-    logging.info(f"Reading CSV file: {filename}")
+    logger.info(f"Reading CSV file: {filename}")
     df = pd.read_csv(filename)
 
     if df["Particles"].dtype == object:
@@ -125,11 +160,11 @@ def check_dependencies():
     try:
         import kaleido
     except ImportError:
-        logging.error("kaleido not installed. Install with: uv add kaleido")
+        logger.error("kaleido not installed. Install with: uv add kaleido")
         return False
 
     if not shutil.which("ffmpeg"):
-        logging.error("ffmpeg not found. Install with: brew install ffmpeg")
+        logger.error("ffmpeg not found. Install with: brew install ffmpeg")
         return False
 
     return True
@@ -236,7 +271,7 @@ def generate_standard_mp4(df, Wall, height_min, height_max):
     """Generate standard MP4 video."""
     timesteps = sorted(df["time"].unique())
     num_frames = len(timesteps)
-    logging.info(f"Generating standard visualization ({num_frames} frames)...")
+    logger.info(f"Generating standard visualization ({num_frames} frames)...")
 
     # Create temp directory
     temp_dir = Path(TEMP_FRAMES_DIR) / "standard"
@@ -245,12 +280,57 @@ def generate_standard_mp4(df, Wall, height_min, height_max):
     # Render frames
     for idx, timestep in enumerate(timesteps):
         frame_path = temp_dir / f"frame_{idx:04d}.png"
-        logging.info(f"  Rendering frame {idx + 1}/{num_frames} (timestep {timestep})")
-        render_standard_frame(df, timestep, Wall, height_min, height_max, frame_path)
+        if (idx + 1) % 10 == 0:  # Progress every 10 frames
+            logger.info(f"  Rendered {idx + 1}/{num_frames} frames")
+
+        frame_data = df[df["time"] == timestep]
+        X_cyl, Y_cyl, Z = create_cylinder_surface(Wall, height_min, height_max)
+
+        fig = go.Figure(
+            data=[
+                go.Surface(
+                    x=X_cyl,
+                    y=Y_cyl,
+                    z=Z,
+                    colorscale="Greys",
+                    showscale=False,
+                    opacity=0.1,
+                ),
+                go.Scatter3d(
+                    x=frame_data["x-position"],
+                    y=frame_data["y-position"],
+                    z=frame_data["z-position"],
+                    mode="markers",
+                    marker=dict(
+                        size=5,
+                        color=frame_data["z-position"],
+                        colorscale="Viridis",
+                        showscale=True,
+                        colorbar=dict(title="Z Position"),
+                        line=dict(width=0.5, color="darkblue"),
+                    ),
+                ),
+            ]
+        )
+
+        fig.update_layout(
+            title=f"Active Brownian Particles - Frame {timestep}",
+            scene=dict(
+                xaxis=dict(title="X", range=[-Wall * 1.1, Wall * 1.1]),
+                yaxis=dict(title="Y", range=[-Wall * 1.1, Wall * 1.1]),
+                zaxis=dict(title="Z", range=[height_min - 1, height_max + 1]),
+                aspectmode="cube",
+            ),
+            width=WIDTH,
+            height=HEIGHT,
+        )
+
+        with suppress_stdout_stderr():
+            fig.write_image(frame_path)
 
     # Create MP4 using ffmpeg
     output_mp4 = Path(OUTPUT_DIR) / "particles_standard.mp4"
-    logging.info(f"Creating MP4: {output_mp4}")
+    logger.info(f"Creating MP4: {output_mp4}")
 
     cmd = [
         "ffmpeg",
@@ -269,7 +349,7 @@ def generate_standard_mp4(df, Wall, height_min, height_max):
     ]
 
     subprocess.run(cmd, check=True, capture_output=True)
-    logging.info(f"✓ Created: {output_mp4}")
+    logger.info(f"✓ Created: {output_mp4}")
 
     # Cleanup
     shutil.rmtree(temp_dir)
@@ -284,7 +364,7 @@ def generate_tracking_mp4(df, Wall, height_min, height_max):
     num_tracked = max(1, int(len(all_particles) * TRACK_PERCENTAGE))
     tracked_particles = np.random.choice(all_particles, size=num_tracked, replace=False)
 
-    logging.info(
+    logger.info(
         f"Generating tracking visualization ({num_tracked} particles, {TRACK_PERCENTAGE * 100:.0f}%)..."
     )
 
@@ -300,21 +380,57 @@ def generate_tracking_mp4(df, Wall, height_min, height_max):
     # Render frames
     for idx, timestep in enumerate(timesteps):
         frame_path = temp_dir / f"frame_{idx:04d}.png"
-        logging.info(f"  Rendering frame {idx + 1}/{num_frames} (timestep {timestep})")
-        render_tracking_frame(
-            df,
-            timestep,
-            tracked_particles,
-            particle_colors,
-            Wall,
-            height_min,
-            height_max,
-            frame_path,
+        if (idx + 1) % 10 == 0:  # Progress every 10 frames
+            logger.info(f"  Rendered {idx + 1}/{num_frames} frames")
+
+        frame_data = df[
+            (df["time"] == timestep) & (df["Particles"].isin(tracked_particles))
+        ]
+        particle_color_list = [particle_colors[p] for p in frame_data["Particles"]]
+        X_cyl, Y_cyl, Z = create_cylinder_surface(Wall, height_min, height_max)
+
+        fig = go.Figure(
+            data=[
+                go.Surface(
+                    x=X_cyl,
+                    y=Y_cyl,
+                    z=Z,
+                    colorscale="Greys",
+                    showscale=False,
+                    opacity=0.1,
+                ),
+                go.Scatter3d(
+                    x=frame_data["x-position"],
+                    y=frame_data["y-position"],
+                    z=frame_data["z-position"],
+                    mode="markers",
+                    marker=dict(
+                        size=8,
+                        color=particle_color_list,
+                        line=dict(width=1, color="white"),
+                    ),
+                ),
+            ]
         )
+
+        fig.update_layout(
+            title=f"Particle Tracking - {num_tracked} Particles - Frame {timestep}",
+            scene=dict(
+                xaxis=dict(title="X", range=[-Wall * 1.1, Wall * 1.1]),
+                yaxis=dict(title="Y", range=[-Wall * 1.1, Wall * 1.1]),
+                zaxis=dict(title="Z", range=[height_min - 1, height_max + 1]),
+                aspectmode="cube",
+            ),
+            width=WIDTH,
+            height=HEIGHT,
+        )
+
+        with suppress_stdout_stderr():
+            fig.write_image(frame_path)
 
     # Create MP4 using ffmpeg
     output_mp4 = Path(OUTPUT_DIR) / "particles_tracked.mp4"
-    logging.info(f"Creating MP4: {output_mp4}")
+    logger.info(f"Creating MP4: {output_mp4}")
 
     cmd = [
         "ffmpeg",
@@ -333,7 +449,7 @@ def generate_tracking_mp4(df, Wall, height_min, height_max):
     ]
 
     subprocess.run(cmd, check=True, capture_output=True)
-    logging.info(f"✓ Created: {output_mp4}")
+    logger.info(f"✓ Created: {output_mp4}")
 
     # Cleanup
     shutil.rmtree(temp_dir)
@@ -341,15 +457,15 @@ def generate_tracking_mp4(df, Wall, height_min, height_max):
 
 def main():
     """Main execution function."""
-    logging.info("Active Particles 3D - MP4 Video Generator")
-    logging.info("=" * 60)
+    logger.info("Active Particles 3D - MP4 Video Generator")
+    logger.info("=" * 60)
 
     # Check dependencies
     if not check_dependencies():
         return 1
 
     # Read simulation data
-    logging.info("Loading simulation data...")
+    logger.info("Loading simulation data...")
     df = read_binary_simulation(INPUT_FILE)
 
     # Read parameters
@@ -365,28 +481,28 @@ def main():
     height_min = df["z-position"].min()
     height_max = df["z-position"].max()
 
-    logging.info(f"Cylinder: radius={Wall:.1f}, height={height:.1f}")
-    logging.info(f"Z-range: [{height_min:.1f}, {height_max:.1f}]")
-    logging.info("")
+    logger.info(f"Cylinder: radius={Wall:.1f}, height={height:.1f}")
+    logger.info(f"Z-range: [{height_min:.1f}, {height_max:.1f}]")
+    logger.info("")
 
     # Generate videos
     try:
         generate_standard_mp4(df, Wall, height_min, height_max)
-        logging.info("")
+        logger.info("")
         generate_tracking_mp4(df, Wall, height_min, height_max)
     except subprocess.CalledProcessError as e:
-        logging.error(f"ffmpeg failed: {e}")
-        logging.error(e.stderr.decode() if e.stderr else "")
+        logger.error(f"ffmpeg failed: {e}")
+        logger.error(e.stderr.decode() if e.stderr else "")
         return 1
 
-    logging.info("")
-    logging.info("=" * 60)
-    logging.info("MP4 generation complete!")
-    logging.info(f"Output files in: {OUTPUT_DIR}/")
-    logging.info("=" * 60)
+    logger.info("")
+    logger.info("=" * 60)
+    logger.info("MP4 generation complete!")
+    logger.info(f"Output files in: {OUTPUT_DIR}/")
+    logger.info("=" * 60)
 
     return 0
 
 
 if __name__ == "__main__":
-    exit(main())
+    main()

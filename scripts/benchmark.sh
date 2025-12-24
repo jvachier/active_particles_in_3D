@@ -32,18 +32,18 @@ echo "  Particle Counts: ${PARTICLE_COUNTS[@]}"
 echo ""
 
 # Build both versions if needed
-if [ ! -f "cpu_openmp/abp_3D_confine.out" ]; then
+if [ ! -f "../cpu_openmp/abp_3D_confine.out" ]; then
     echo -e "${YELLOW}Building CPU (OpenMP) version...${NC}"
-    cd cpu_openmp
+    cd ../cpu_openmp
     make clean && make
-    cd ..
+    cd ../scripts
 fi
 
-if [ ! -f "gpu_hybrid/abp_3D_confine.out" ]; then
+if [ ! -f "../gpu_hybrid/abp_3D_confine.out" ]; then
     echo -e "${YELLOW}Building GPU (Metal/OpenMP) hybrid version...${NC}"
-    cd gpu_hybrid
+    cd ../gpu_hybrid
     make clean && make
-    cd ..
+    cd ../scripts
 fi
 
 echo -e "${GREEN}✓ Both executables ready${NC}"
@@ -70,8 +70,8 @@ create_param_file() {
     local n_thread=$2
     local filename=$3
     
-    # epsilon delta particles Dt De vs Wall height N output_interval N_thread
-    echo -e "0.01\t1e-4\t${particles}\t10.1\t0.0\t0.0\t15.0\t15.0\t${TIMESTEPS}\t${OUTPUT_INTERVAL}\t${n_thread}" > "$filename"
+    # epsilon delta particles Dt De vs Wall height N output_interval N_thread use_binary
+    echo -e "0.01\t1e-4\t${particles}\t10.1\t0.0\t0.0\t15.0\t15.0\t${TIMESTEPS}\t${OUTPUT_INTERVAL}\t${n_thread}\t1" > "$filename"
 }
 
 echo -e "${CYAN}Starting benchmark...${NC}"
@@ -85,10 +85,10 @@ for N in "${PARTICLE_COUNTS[@]}"; do
     # Test 1: Single CPU (1 thread, OpenMP version)
     # ========================================
     echo -ne "  ${YELLOW}[1/3]${NC} Single CPU (1 thread)... "
-    create_param_file $N 1 "cpu_openmp/parameter.txt"
-    cd cpu_openmp
+    create_param_file $N 1 "../parameter.txt"
+    cd ../cpu_openmp
     CPU1_OUTPUT=$(./abp_3D_confine.out 2>&1)
-    cd ..
+    cd ../scripts
     CPU1_TIME=$(extract_time "$CPU1_OUTPUT")
     echo -e "${GREEN}${CPU1_TIME}s${NC}"
     
@@ -96,10 +96,10 @@ for N in "${PARTICLE_COUNTS[@]}"; do
     # Test 2: OpenMP with 6 threads
     # ========================================
     echo -ne "  ${YELLOW}[2/3]${NC} OpenMP (6 threads)...    "
-    create_param_file $N 6 "cpu_openmp/parameter.txt"
-    cd cpu_openmp
+    create_param_file $N 6 "../parameter.txt"
+    cd ../cpu_openmp
     OMP_OUTPUT=$(./abp_3D_confine.out 2>&1)
-    cd ..
+    cd ../scripts
     OMP_TIME=$(extract_time "$OMP_OUTPUT")
     echo -e "${GREEN}${OMP_TIME}s${NC}"
     
@@ -107,10 +107,10 @@ for N in "${PARTICLE_COUNTS[@]}"; do
     # Test 3: GPU Metal (with OpenMP fallback for small N)
     # ========================================
     echo -ne "  ${YELLOW}[3/3]${NC} GPU Metal...            "
-    create_param_file $N 6 "gpu_hybrid/parameter.txt"
-    cd gpu_hybrid
+    create_param_file $N 6 "../parameter.txt"
+    cd ../gpu_hybrid
     GPU_OUTPUT=$(./abp_3D_confine.out 2>&1)
-    cd ..
+    cd ../scripts
     GPU_TIME=$(extract_time "$GPU_OUTPUT")
     
     # Check if GPU was actually used
@@ -141,14 +141,13 @@ echo ""
 echo "Results saved to: $RESULTS_FILE"
 echo ""
 
-# Restore default parameter files (200 particles, 6 threads)
-create_param_file 200 6 "cpu_openmp/parameter.txt"
-create_param_file 200 6 "gpu_hybrid/parameter.txt"
+# Restore default parameter file (200 particles, 6 threads)
+create_param_file 200 6 "../parameter.txt"
 
 # Generate visualization if uv is available
 if command -v uv &> /dev/null; then
     echo -e "${CYAN}Generating visualizations...${NC}"
-    if uv run visualize_benchmark.py; then
+    if uv run scripts/visualize_benchmark.py; then
         echo -e "${GREEN}✓ Interactive plots saved to benchmark_plots.html${NC}"
         echo -e "${GREEN}✓ Open in browser: open benchmark_plots.html${NC}"
     else
@@ -156,7 +155,7 @@ if command -v uv &> /dev/null; then
     fi
 else
     echo -e "${YELLOW}⚠ uv not found. Skipping visualization.${NC}"
-    echo -e "  To generate plots: uv run visualize_benchmark.py${NC}"
+    echo -e "  To generate plots: uv run scripts/visualize_benchmark.py${NC}"
 fi
 
 echo ""

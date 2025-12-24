@@ -54,7 +54,7 @@ This repository provides **two optimized implementations**:
 | **GPU Speedup vs 1 CPU** | - | - | 0.3× | **9.3×** | **20.2×** |
 | **GPU Speedup vs OpenMP** | - | - | 0.9× | **3.9×** | **8.4×** |
 
-> **Benchmark:** Run `./benchmark.sh` to compare all three modes on your system
+> **Benchmark:** Run `bash scripts/benchmark.sh` to compare all three modes on your system
 
 ## Overview
 
@@ -337,10 +337,10 @@ Use the provided Python script to generate interactive 3D visualizations:
 
 ```bash
 # Standard visualization (particles colored by z-position)
-uv run generate_video.py --input data/simulation.bin --output figures/particles
+uv run scripts/generate_video.py --input data/simulation.bin --output figures/particles
 
 # Particle tracking visualization (10% of particles with unique colors)
-uv run generate_video.py --input data/simulation.bin --output figures/particles --track-particles 0.1
+uv run scripts/generate_video.py --input data/simulation.bin --output figures/particles --track-particles 0.1
 ```
 
 **Features:**
@@ -415,7 +415,7 @@ Comprehensive three-way comparison on **Apple M2** with **1000 timesteps**:
 
 ```bash
 # Run comprehensive three-way benchmark suite
-./benchmark.sh
+bash scripts/benchmark.sh
 
 # Results saved to:
 # - benchmark_results.csv (raw timing data)

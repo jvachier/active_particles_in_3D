@@ -18,10 +18,10 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 # Configuration
-INPUT_FILE = "data/simulation.bin"
-PARAMETER_FILE = "parameter.txt"
-OUTPUT_STANDARD = "figures/particles_standard"
-OUTPUT_TRACKED = "figures/particles_tracked"
+INPUT_FILE = "../data/simulation.bin"
+PARAMETER_FILE = "../parameter.txt"
+OUTPUT_STANDARD = "../figures/particles_standard"
+OUTPUT_TRACKED = "../figures/particles_tracked"
 TRACK_PERCENTAGE = 0.01  # 1% of particles
 FRAME_DURATION = 50  # milliseconds
 
