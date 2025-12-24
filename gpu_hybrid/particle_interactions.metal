@@ -15,12 +15,12 @@ using namespace metal;
 
 /**
  * @brief Compute Lennard-Jones forces for particle interactions
- * 
- * Calculates repulsive forces between particles using the Lennard-Jones potential.
+ *
+ * Calculates forces between particles using the Lennard-Jones potential.
  * Each thread processes one particle and computes its interaction with all others.
- * 
- * Force calculation: F = prefactor * (r_j - r_i) / R^14
- * where R is the distance between particles i and j
+ *
+ * Force calculation: F = prefactor * (2/R^14 - 1/R^8) * (r_j - r_i)
+ * where R is the distance between particles i and j, prefactor = 24*epsilon
  * 
  * @param x X-coordinates of all particles
  * @param y Y-coordinates of all particles
@@ -75,11 +75,11 @@ kernel void computeLJForces(
         float R4 = R2 * R2;
         float R8 = R4 * R4;
         float R14 = R8 * R4 * R2;
-        
-        // Lennard-Jones force (repulsive only)
-        // F_ij = prefactor * (r_j - r_i) / R^14
-        float force_magnitude = prefactor / R14;
-        
+
+        // Lennard-Jones force (repulsive part: 2/R^14 - attractive part: 1/R^8)
+        // F = prefactor * (2/R^14 - 1/R^8) where prefactor = 24*epsilon
+        float force_magnitude = prefactor * (2.0f / R14 - 1.0f / R8);
+
         // Cap force magnitude to prevent overflow
         force_magnitude = min(force_magnitude, 1e10f);
         

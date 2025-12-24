@@ -53,9 +53,10 @@ void compute_forces_cpu(
             double R4 = R2 * R2;
             double R8 = R4 * R4;
             double R14 = R8 * R4 * R2;
-            
-            // Force magnitude
-            double force_mag = prefactor / R14;
+
+            // Lennard-Jones force magnitude (repulsive part: 2/R^14 - attractive part: 1/R^8)
+            // F = prefactor * (2/R^14 - 1/R^8) where prefactor = 24*epsilon
+            double force_mag = prefactor * (2.0 / R14 - 1.0 / R8);
             
             // Accumulate force components
             fx_local += force_mag * dx;

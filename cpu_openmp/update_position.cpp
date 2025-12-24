@@ -26,7 +26,7 @@ using namespace std;
  * Force calculation:
  * - Nested loop over particle pairs (O(N^2) complexity)
  * - Cutoff distance: r (typically 5*L)
- * - Force formula: F = epsilon * 48 / R^14 (repulsive part of LJ)
+ * - Force formula: F = 24*epsilon * (2/R^14 - 1/R^8) (Lennard-Jones)
  * - Force capping: maximum value of 1.0 to prevent numerical instability
  */
 void update_position(
@@ -89,9 +89,12 @@ void update_position(
           
           // Apply Lennard-Jones force if within cutoff radius
           if (R < r) {
-            // Repulsive force: F ~ 1/R^14 (derivative of LJ potential)
-            a = prefactor_interaction / pow(R, 14);
-            
+            // Lennard-Jones force (repulsive part: 2/R^14 - attractive part: 1/R^8)
+            // F = prefactor * (2/R^14 - 1/R^8) where prefactor = 24*epsilon
+            double R8 = pow(R, 8);
+            double R14 = pow(R, 14);
+            a = prefactor_interaction * (2.0 / R14 - 1.0 / R8);
+
             // Cap force to prevent numerical instability at very small distances
             if (a > 1.0) {
               a = 1.0;
