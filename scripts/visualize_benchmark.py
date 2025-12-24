@@ -16,7 +16,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 
-def load_benchmark_data(filename="benchmark_results.csv"):
+def load_benchmark_data(filename="../benchmark_results.csv"):
     """Load benchmark results from CSV file."""
     df = pd.read_csv(filename)
     return df
@@ -294,12 +294,12 @@ def create_plots(df):
     )
 
     # Save as HTML (interactive)
-    output_html = "benchmark_plots.html"
+    output_html = "../benchmark_plots.html"
     fig.write_html(output_html)
     logging.info(f"Interactive plots saved to {output_html}")
 
     # Save as PNG
-    output_png = "benchmark_plots.png"
+    output_png = "../benchmark_plots.png"
     fig.write_image(output_png, width=2000, height=550, scale=2)
     logging.info(f"Static image saved to {output_png}")
 

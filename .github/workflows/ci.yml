@@ -3,8 +3,44 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ main ]
+    paths:
+      # Test files
+      - 'tests/**'
+      # Source files covered by tests
+      - 'cpu_openmp/cylindrical_reflective_boundary_conditions.cpp'
+      - 'cpu_openmp/initialization.cpp'
+      - 'cpu_openmp/check_nooverlap.cpp'
+      # Headers for tested files
+      - 'cpu_openmp/headers/cylindrical_reflective_boundary_conditions.h'
+      - 'cpu_openmp/headers/initialization.h'
+      - 'cpu_openmp/headers/check_nooverlap.h'
+      # Build system
+      - 'cpu_openmp/Makefile'
+      - 'gpu_hybrid/Makefile'
+      # Configuration
+      - 'parameter.txt'
+      # CI/CD configuration itself
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      # Test files
+      - 'tests/**'
+      # Source files covered by tests
+      - 'cpu_openmp/cylindrical_reflective_boundary_conditions.cpp'
+      - 'cpu_openmp/initialization.cpp'
+      - 'cpu_openmp/check_nooverlap.cpp'
+      # Headers for tested files
+      - 'cpu_openmp/headers/cylindrical_reflective_boundary_conditions.h'
+      - 'cpu_openmp/headers/initialization.h'
+      - 'cpu_openmp/headers/check_nooverlap.h'
+      # Build system
+      - 'cpu_openmp/Makefile'
+      - 'gpu_hybrid/Makefile'
+      # Configuration
+      - 'parameter.txt'
+      # CI/CD configuration itself
+      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 jobs:
@@ -124,11 +160,9 @@ jobs:
     
     - name: Validate parameter.txt format
       run: |
-        # Check that parameter.txt files have 11 tab-separated values
-        cd cpu_openmp
-        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
-        cd ../gpu_hybrid
-        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
+        # Check that parameter.txt has 12 tab-separated values
+        test -f parameter.txt || exit 1
+        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 12 || exit 1
     
     - name: Check for broken links in README
       run: |

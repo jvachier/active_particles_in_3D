@@ -30,7 +30,7 @@ void check_nooverlap(
   uniform_real_distribution<double> &distribution) {
     int count = 0;
     double R = 0.0;  // Inter-particle distance
-    
+
 #pragma omp parallel for simd
     for (int k = 0; k < Particles; k++) {
       for (int j = 0; j < Particles; j++) {

@@ -32,7 +32,7 @@ void cylindrical_reflective_boundary_conditions(
     double distance_squared = 0.0, Wall_squared = Wall * Wall;
     double height_L = height - L / 2.0;  // Effective boundary position
     double D_AW_z = 0.0;  // Distance from axial wall
-    
+
 #pragma omp parallel for simd
     for (int k = 0; k < Particles; k++) {
       // --- Radial boundary (x-y plane) ---

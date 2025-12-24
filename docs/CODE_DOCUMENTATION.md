@@ -451,14 +451,14 @@ if (Particles >= GPU_PARTICLE_THRESHOLD) {
 
 ### Benchmarking System
 
-**Script**: `benchmark.sh`
+**Script**: `scripts/benchmark.sh`
 
 **Methodology**:
 1. Tests three modes: 1 CPU thread, 6 OpenMP threads, GPU Metal
 2. Particle counts: 100, 200, 500, 1000, 2000, 5000
 3. Extracts timing via sed: `Time taken: X seconds`
 4. Generates CSV: `benchmark_results.csv`
-5. Visualizes with Plotly: `visualize_benchmark.py`
+5. Visualizes with Plotly: `scripts/visualize_benchmark.py`
 
 **Output**:
 - Interactive HTML plot (`benchmark_plots.html`)
@@ -496,7 +496,7 @@ if (Particles >= GPU_PARTICLE_THRESHOLD) {
 7. **Adaptive timestep**: Automatic stability control
 8. **Checkpointing**: Resume from saved state
 9. **Real-time visualization**: OpenGL/VTK rendering
-10. **Parameter sweeps**: ✅ **Implemented** - Automated via `benchmark.sh`
+10. **Parameter sweeps**: ✅ **Implemented** - Automated via `scripts/benchmark.sh`
 
 ## References
 

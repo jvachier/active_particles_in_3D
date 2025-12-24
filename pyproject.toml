@@ -7,5 +7,6 @@ requires-python = ">=3.11"
 dependencies = [
     "kaleido>=1.2.0",
     "pandas>=2.3.3",
+    "playwright>=1.57.0",
     "plotly>=6.5.0",
 ]
