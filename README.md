@@ -366,21 +366,9 @@ uv run scripts/generate_video.py --input data/simulation.bin --output figures/pa
 
 ### Particle Dynamics Video
 
-https://github.com/jvachier/active_particles_in_3D/assets/89128100/e0ea3d4e-58a5-4565-8e57-4705057479df
+https://github.com/user-attachments/assets/da1524fa-1234-4cfa-b9f2-dd35e8069d13
 
-*Real-time visualization of 200 active particles under cylindrical confinement showing collective motion patterns.*
-
-### Spatial Distribution
-
-![Particle positions](./cpu_openmp/figures/particles.png)
-
-*Figure: Snapshot of particle positions showing spatial organization within the cylindrical boundary.*
-
-### Trajectory Analysis
-
-![Particle trajectories](./cpu_openmp/figures/particles_time.png)
-
-*Figure: Time-resolved particle trajectories demonstrating complex motion patterns.*
+*Real-time visualization of 1000 active particles under cylindrical confinement showing collective motion patterns.*
 
 ## Performance
 
