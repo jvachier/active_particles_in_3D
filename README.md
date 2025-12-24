@@ -366,7 +366,9 @@ uv run scripts/generate_video.py --input data/simulation.bin --output figures/pa
 
 ### Particle Dynamics Video
 
-https://github.com/user-attachments/assets/da1524fa-1234-4cfa-b9f2-dd35e8069d13
+
+https://github.com/user-attachments/assets/4292b81a-d2bc-4d01-ae49-dc028892c405
+
 
 *Real-time visualization of 1000 active particles under cylindrical confinement showing collective motion patterns.*
 
