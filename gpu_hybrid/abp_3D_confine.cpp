@@ -72,14 +72,15 @@ using namespace std;
  */
 int main(int argc, char *argv[]) {
   // Open input parameter file and output data file
-  FILE *datacsv;
+  FILE *datafile;
   FILE *parameter;
-  parameter = fopen("parameter.txt", "r");
-  datacsv = fopen("./data/simulation.csv", "w");
+  parameter = fopen("../parameter.txt", "r");
+  datafile = nullptr;  // Will be opened after reading parameters
 
   // Verify parameter file exists
   if (parameter == NULL) {
-    printf("Error: parameter.txt file not found.\n");
+    printf("Error: ../parameter.txt file not found.\n");
+    printf("Make sure parameter.txt exists in the project root directory.\n");
     return 0;
   }
 
@@ -95,10 +96,11 @@ int main(int argc, char *argv[]) {
   int N;              // Total number of time iterations
   int output_interval; // Save data every N timesteps
   int N_thread;       // Number of OpenMP threads
+  int use_binary;     // Output format: 1 for binary, 0 for CSV
 
   // Read parameters from tab-separated file
-  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\n", \
-    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval, &N_thread);
+  fscanf(parameter, "%lf\t%lf\t%d\t%lf\t%lf\t%lf\t%lf\t%lf\t%d\t%d\t%d\t%d\n", \
+    &epsilon, &delta, &Particles, &Dt, &De, &vs, &Wall, &height, &N, &output_interval, &N_thread, &use_binary);
   fclose(parameter);
   
   // Set number of OpenMP threads for parallelization
@@ -106,23 +108,20 @@ int main(int argc, char *argv[]) {
   
   // Echo parameters to console for verification
   printf("Simulation parameters:\n");
-  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d N_thread=%d\n", \
-    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval, N_thread);
+  printf("epsilon=%lf delta=%lf Particles=%d Dt=%lf De=%lf vs=%lf Wall=%lf height=%lf N=%d output_interval=%d N_thread=%d use_binary=%d\n", \
+    epsilon, delta, Particles, Dt, De, vs, Wall, height, N, output_interval, N_thread, use_binary);
 
   // Validate parameters
   if (epsilon < 0.0) {
     fprintf(stderr, "Error: epsilon must be non-negative (got %lf)\n", epsilon);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (delta <= 0.0) {
     fprintf(stderr, "Error: delta (timestep) must be positive (got %lf)\n", delta);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (Particles <= 0) {
     fprintf(stderr, "Error: Number of particles must be positive (got %d)\n", Particles);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (Particles > 10000) {
@@ -130,51 +129,56 @@ int main(int argc, char *argv[]) {
   }
   if (Dt < 0.0) {
     fprintf(stderr, "Error: Translational diffusion Dt must be non-negative (got %lf)\n", Dt);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (De < 0.0) {
     fprintf(stderr, "Error: Rotational diffusion De must be non-negative (got %lf)\n", De);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (vs < 0.0) {
     fprintf(stderr, "Error: Self-propulsion velocity vs must be non-negative (got %lf)\n", vs);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (Wall <= 0.0) {
     fprintf(stderr, "Error: Cylinder radius (Wall) must be positive (got %lf)\n", Wall);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (height <= 0.0) {
     fprintf(stderr, "Error: Cylinder height must be positive (got %lf)\n", height);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (N <= 0) {
     fprintf(stderr, "Error: Number of iterations must be positive (got %d)\n", N);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (output_interval <= 0) {
     fprintf(stderr, "Error: Output interval must be positive (got %d)\n", output_interval);
-    fclose(datacsv);
     return EXIT_FAILURE;
   }
   if (output_interval > N) {
     fprintf(stderr, "Warning: Output interval (%d) is larger than total iterations (%d)\n", output_interval, N);
   }
-  
-  // Check if output file was created successfully
-  if (datacsv == NULL) {
-    fprintf(stderr, "Error: Cannot create output file ./data/simulation.csv\n");
-    fprintf(stderr, "Make sure the data/ directory exists.\n");
+  if (use_binary != 0 && use_binary != 1) {
+    fprintf(stderr, "Error: use_binary must be 0 (CSV) or 1 (binary) (got %d)\n", use_binary);
     return EXIT_FAILURE;
   }
-  
+
+  // Open output file based on format selection
+  if (use_binary) {
+    datafile = fopen("../data/simulation.bin", "wb");
+  } else {
+    datafile = fopen("../data/simulation.csv", "w");
+  }
+
+  // Check if output file was created successfully
+  if (datafile == NULL) {
+    fprintf(stderr, "Error: Cannot create output file ../data/simulation.%s\n", use_binary ? "bin" : "csv");
+    fprintf(stderr, "Make sure the data/ directory exists in the project root.\n");
+    return EXIT_FAILURE;
+  }
+
   printf("Parameters validated successfully.\n");
+  printf("Output format: %s\n", use_binary ? "Binary" : "CSV");
 
   // Allocate memory for particle positions and orientations using std::vector
   // Modern C++ approach - automatic memory management, no manual free() needed
@@ -239,9 +243,16 @@ int main(int argc, char *argv[]) {
   double itime, ftime, exec_time;
   itime = omp_get_wtime();
 
-  // Write CSV header
-  fprintf(datacsv, "Particles,x-position,y-position,z-position, "\
-    "ex-orientation,ey-orientation,ez-orientation,time\n");
+  // Write CSV header (only for CSV format)
+  if (!use_binary) {
+    fprintf(datafile, "Particles,x-position,y-position,z-position, "\
+      "ex-orientation,ey-orientation,ez-orientation,time\n");
+  } else {
+    // Write binary header: number of particles and total timesteps
+    int num_frames = (N + output_interval - 1) / output_interval;
+    fwrite(&Particles, sizeof(int), 1, datafile);
+    fwrite(&num_frames, sizeof(int), 1, datafile);
+  }
 
   // Initialize particle positions and orientations randomly within the cylinder
   initialization(
@@ -289,7 +300,7 @@ int main(int argc, char *argv[]) {
       print_file(
         x.data(), y.data(), z.data(), ex.data(), ey.data(), ez.data(),
         Particles, time,
-        datacsv);
+        datafile, use_binary);
       }
     }
 
@@ -309,8 +320,8 @@ int main(int argc, char *argv[]) {
   // No need for manual memory management!
 
   // Close output file
-  fclose(datacsv);
-  
-  printf("Results saved to ./data/simulation.csv\n");
+  fclose(datafile);
+
+  printf("Results saved to ../data/simulation.%s\n", use_binary ? "bin" : "csv");
   return 0;
 }

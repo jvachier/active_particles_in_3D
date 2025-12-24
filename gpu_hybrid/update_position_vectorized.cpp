@@ -64,7 +64,7 @@ void update_positions_with_forces(
     std::normal_distribution<double> &Gaussdistribution)
 {
     double prefactor_noise = sqrt(2.0 * delta * Dt);
-    
+
     #pragma omp parallel for simd
     for (int k = 0; k < Particles; k++) {
         // Generate Gaussian white noise

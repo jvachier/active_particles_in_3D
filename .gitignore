@@ -104,3 +104,8 @@ ehthumbs.db
 
 # Virtual environments
 *.venv
+
+# Video files
+*.mp4
+
+DEPENDENCY_MANAGEMENT.md

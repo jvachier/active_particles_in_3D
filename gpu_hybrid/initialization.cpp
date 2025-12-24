@@ -26,7 +26,7 @@ void initialization(
   uniform_real_distribution<double> &distribution,
   uniform_real_distribution<double> &distribution_e) {
   double norm_e = 0.0, invers_norm_e = 0.0;
-  
+
   // Stage 1: Initialize and normalize orientation vectors
 #pragma omp parallel for simd
   for (int k = 0; k < Particles; k++) {

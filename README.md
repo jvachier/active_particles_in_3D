@@ -101,7 +101,7 @@ where $`\tilde{\epsilon}`$ is the depth of the potential well and $`\tilde{R}`$ 
 - **Repulsive Lennard-Jones interactions** between particles
 - **OpenMP parallelization** for high performance
 - **Proper stochastic noise generation** with configurable seeds
-- **CSV output** for trajectory analysis
+- **Dual output formats** - CSV or binary for space efficiency
 - **Overlap prevention** during initialization
 - **Configurable simulation parameters** via text file
 
@@ -210,8 +210,10 @@ nano parameter.txt
 
 3. **Access results**:
 ```bash
-# Simulation data
-cat data/simulation.csv
+# Simulation data (in project root data/ directory)
+cat ../data/simulation.csv
+# or if using binary format:
+ls -lh ../data/simulation.bin
 ```
 
 ### Quick Start Example
@@ -231,10 +233,10 @@ Time taken is 12.345678
 
 ## Configuration
 
-Edit `parameter.txt` to configure the simulation. The file contains a single line with 11 tab-separated values:
+Edit `parameter.txt` in the project root to configure the simulation. Both CPU and GPU versions use this centralized configuration file. The file contains a single line with 12 tab-separated values:
 
 ```
-epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval  N_thread
+epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval  N_thread  use_binary
 ```
 
 ### Parameter Descriptions
@@ -252,44 +254,50 @@ epsilon  delta  Particles  Dt  De  vs  Wall  height  N  output_interval  N_threa
 | `N` | Number of iterations | 1000 - 100000 | 1000 |
 | `output_interval` | Save frequency (timesteps) | 1 - 1000 | 100 |
 | `N_thread` | OpenMP thread count | 1 - 16 | 6 |
+| `use_binary` | Output format (0=CSV, 1=binary) | 0 or 1 | 1 |
 
 ### Example Configurations
 
-**Passive Brownian particles (single thread):**
+**Passive Brownian particles (single thread, CSV output):**
 ```
-0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000  10  1
+0.01  1e-4  100  1.0  1.0  0.0  10.0  10.0  5000  10  1  0
 ```
 
-**Active particles without interactions (6 threads):**
+**Active particles without interactions (6 threads, binary output):**
 ```
-0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6
+0.0  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6  1
 ```
 
 **Active particles with strong interactions:**
 ```
-0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6
+0.1  1e-4  100  1.0  1.0  5.0  10.0  10.0  5000  10  6  1
 ```
 
-**High-resolution output (save every timestep):**
+**High-resolution output (save every timestep, CSV for analysis):**
 ```
-0.01  1e-4  100  1.0  1.0  5.0  10.0  10.0  1000  1  6
+0.01  1e-4  100  1.0  1.0  5.0  10.0  10.0  1000  1  6  0
 ```
 
 **Low-resolution output (save every 100 timesteps):**
 ```
-0.01  1e-4  200  1.0  1.0  5.0  15.0  15.0  10000  100  6
+0.01  1e-4  200  1.0  1.0  5.0  15.0  15.0  10000  100  6  1
 ```
 
-**Large-scale simulation (GPU-optimized):**
+**Large-scale simulation (GPU-optimized, binary for space efficiency):**
 ```
-0.01  1e-4  5000  10.1  0.0  0.0  15.0  15.0  1000  100  6
+0.01  1e-4  5000  10.1  0.0  0.0  15.0  15.0  1000  100  6  1
 ```
 
 ## Output
 
-### Data Format
+All simulations write to a unified `data/` directory in the project root (not within cpu_openmp/ or gpu_hybrid/).
 
-The simulation outputs a CSV file (`data/simulation.csv`) with the following columns:
+### Output Formats
+
+The simulation supports two output formats controlled by the `use_binary` parameter:
+
+#### CSV Format (`use_binary=0`)
+Human-readable text format (`data/simulation.csv`):
 
 ```csv
 Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orientation,time
@@ -303,7 +311,56 @@ Particles,x-position,y-position,z-position,ex-orientation,ey-orientation,ez-orie
 - **ex,ey,ez-orientation**: Unit orientation vector components
 - **time**: Simulation timestep
 
-**Note:** Data is saved at intervals specified by the `output_interval` parameter (default: every 10 timesteps).
+#### Binary Format (`use_binary=1`)
+Compact binary format (`data/simulation.bin`) for space efficiency:
+
+**Header:**
+- `num_particles` (int32): Number of particles
+- `num_frames` (int32): Total number of saved frames
+
+**Per Frame:**
+- `timestep` (int32): Current timestep
+- `x[N]` (float64): x-coordinates for all N particles
+- `y[N]` (float64): y-coordinates
+- `z[N]` (float64): z-coordinates
+- `ex[N]` (float64): x-component of orientation vectors
+- `ey[N]` (float64): y-component of orientation vectors
+- `ez[N]` (float64): z-component of orientation vectors
+
+**Space Savings:** Binary format is typically 50-70% smaller than CSV for large simulations.
+
+**Note:** Data is saved at intervals specified by the `output_interval` parameter (default: every 100 timesteps).
+
+### Generating Videos
+
+Use the provided Python script to generate interactive 3D visualizations:
+
+```bash
+# Standard visualization (particles colored by z-position)
+uv run generate_video.py --input data/simulation.bin --output figures/particles
+
+# Particle tracking visualization (10% of particles with unique colors)
+uv run generate_video.py --input data/simulation.bin --output figures/particles --track-particles 0.1
+```
+
+**Features:**
+- Reads cylinder dimensions from `parameter.txt` automatically
+- Creates two types of visualizations:
+  - **Standard**: All particles colored by z-position with colorbar
+  - **Tracking**: Subset of particles with individual colors (no colorbar)
+- Interactive Plotly 3D visualization with:
+  - Cylindrical boundary from parameter.txt
+  - Animation controls (play/pause, slider)
+  - Hover information for each particle
+- Outputs HTML files that can be viewed in any browser
+
+**Options:**
+- `--input`: Path to simulation file (default: `data/simulation.csv`)
+- `--output`: Output filename prefix without extension (default: `figures/particles`)
+- `--binary`: Use binary input format (auto-detected from .bin extension)
+- `--track-particles`: Percentage (0.0-1.0) of particles to track with unique colors
+- `--parameter-file`: Path to parameter.txt (default: `parameter.txt`)
+- `--frame-duration`: Milliseconds per frame (default: 50)
 
 ## Visualizations
 

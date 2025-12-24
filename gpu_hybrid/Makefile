@@ -2,14 +2,15 @@
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
 	# Use clang++ on macOS for Metal compatibility
+	# Note: clang doesn't support -fopenmp-simd, warnings about vectorization are normal
 	CC = clang++ -O3 -std=c++17 -stdlib=libc++
-	CFLAGS = -Wall -g -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include
+	CFLAGS = -Wall -g -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include -Wno-pass-failed
 	LDFLAGS = -L/opt/homebrew/opt/libomp/lib -lomp
 	METAL_FLAGS = -framework Metal -framework Foundation
 	METAL_OBJS = metal_compute.o
 	OBJC_COMPILER = clang++ -x objective-c++ -O3 -std=c++17 -stdlib=libc++
 else
-	# Use g++ on other platforms (no Metal support)
+	# Use g++ on other platforms (no Metal support, has full SIMD support)
 	CC = g++-14 -O3 -std=c++17
 	CFLAGS = -Wall -g -fopenmp -fopenmp-simd
 	LDFLAGS =
