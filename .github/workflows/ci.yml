@@ -124,11 +124,9 @@ jobs:
     
     - name: Validate parameter.txt format
       run: |
-        # Check that parameter.txt files have 11 tab-separated values
-        cd cpu_openmp
-        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
-        cd ../gpu_hybrid
-        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 11 || exit 1
+        # Check that parameter.txt has 12 tab-separated values
+        test -f parameter.txt || exit 1
+        test $(awk -F'\t' '{print NF}' parameter.txt) -eq 12 || exit 1
     
     - name: Check for broken links in README
       run: |
